@@ -3,6 +3,214 @@
 if (!prefixed) {
     switch(instr) {
 
+        case 0x0: // NOP   [----]
+            
+            break
+        case 0x1: // LD BC d16 [----]
+            this.setBC(this.nextWord())
+            break
+        case 0x2: // LD (BC) A [----]
+            this.ld_valBC_A()
+            break
+        case 0x3: // INC BC  [----]
+            this.inc_reg16(R16.BC)
+            break
+        case 0x4: // INC B  [Z0H-]
+            this.inc_reg8(R8.B)
+            break
+        case 0x5: // DEC B  [Z1H-]
+            this.dec_reg8(R8.B)
+            break
+        case 0x6: // LD B d8 [----]
+            this.B = this.nextByte()
+            break
+        case 0x7: // RLCA   [000C]
+            
+            break
+
+        case 0x8: // LD (a16) SP [----]
+            this.ld_vala16_SP()
+            break
+        case 0x9: // ADD HL BC [-0HC]
+            
+            break
+        case 0xa: // LD A (BC) [----]
+            this.ld_A_valBC()
+            break
+        case 0xb: // DEC BC  [----]
+            
+            break
+        case 0xc: // INC C  [Z0H-]
+            this.inc_reg16(R16.C)this.inc_reg8(R8.C)
+            break
+        case 0xd: // DEC C  [Z1H-]
+            this.dec_reg8(R8.C)
+            break
+        case 0xe: // LD C d8 [----]
+            this.C = this.nextByte()
+            break
+        case 0xf: // RRCA   [000C]
+            
+            break
+
+
+
+        case 0x10: // STOP 0  [----]
+            this.stop()
+            break
+        case 0x11: // LD DE d16 [----]
+            this.setDE(this.nextWord())
+            break
+        case 0x12: // LD (DE) A [----]
+            this.ld_valDE_A()
+            break
+        case 0x13: // INC DE  [----]
+            this.inc_reg16(R16.DE)
+            break
+        case 0x14: // INC D  [Z0H-]
+            this.inc_reg8(R8.D)
+            break
+        case 0x15: // DEC D  [Z1H-]
+            this.dec_reg8(R8.D)
+            break
+        case 0x16: // LD D d8 [----]
+            this.D = this.nextByte()
+            break
+        case 0x17: // RLA   [000C]
+            
+            break
+
+        case 0x18: // JR r8  [----]
+            this.jr(int8(this.nextByte()))
+            break
+        case 0x19: // ADD HL DE [-0HC]
+            
+            break
+        case 0x1a: // LD A (DE) [----]
+            this.ld_A_valDE()
+            break
+        case 0x1b: // DEC DE  [----]
+            this.dec_reg16(R16.DE)
+            break
+        case 0x1c: // INC E  [Z0H-]
+            this.inc_reg8(R8.E)
+            break
+        case 0x1d: // DEC E  [Z1H-]
+            this.dec_reg8(R8.E)
+            break
+        case 0x1e: // LD E d8 [----]
+            this.E = this.nextByte()
+            break
+        case 0x1f: // RRA   [000C]
+            
+            break
+
+
+
+        case 0x20: // JR NZ r8 [----]
+            if (!this.F.z) this.jr(int8(this.nextByte()))
+            break
+        case 0x21: // LD HL d16 [----]
+            this.setHL(this.nextWord())
+            break
+        case 0x22: // LD (HL+) A [----]
+            this.ld_valHLinc_A()
+            break
+        case 0x23: // INC HL  [----]
+            this.inc_reg16(R16.HL)
+            break
+        case 0x24: // INC H  [Z0H-]
+            this.inc_reg8(R8.H)
+            break
+        case 0x25: // DEC H  [Z1H-]
+            this.dec_reg8(R8.H)
+            break
+        case 0x26: // LD H d8 [----]
+            this.H = this.nextByte()
+            break
+        case 0x27: // DAA   [Z-0C]
+            
+            break
+
+        case 0x28: // JR Z r8 [----]
+            if (this.F.z) this.jr(int8(this.nextByte()))
+            break
+        case 0x29: // ADD HL HL [-0HC]
+            
+            break
+        case 0x2a: // LD A (HL+) [----]
+            this.ld_A_valHLinc()
+            break
+        case 0x2b: // DEC HL  [----]
+            this.dec_reg16(R16.HL)
+            break
+        case 0x2c: // INC L  [Z0H-]
+            this.inc_reg8(R8.L)
+            break
+        case 0x2d: // DEC L  [Z1H-]
+            this.dec_reg8(R8.L)
+            break
+        case 0x2e: // LD L d8 [----]
+            this.L = this.nextByte()
+            break
+        case 0x2f: // CPL   [-11-]
+            
+            break
+
+
+
+        case 0x30: // JR NC r8 [----]
+            if (!this.F.c) this.jr(int8(this.nextByte()))
+            break
+        case 0x31: // LD SP d16 [----]
+            this.setSP(this.nextWord())
+            break
+        case 0x32: // LD (HL-) A [----]
+            this.ld_valHLdec_A()
+            break
+        case 0x33: // INC SP  [----]
+            this.inc_reg16(R16.SP)
+            break
+        case 0x34: // INC (HL)  [Z0H-]
+            this.inc_valHL()
+            break
+        case 0x35: // DEC (HL)  [Z1H-]
+            this.dec_valHL()
+            break
+        case 0x36: // LD (HL) d8 [----]
+            this.mmu.wb(this.getHL(), this.nextByte())
+            break
+        case 0x37: // SCF   [-001]
+            
+            break
+
+        case 0x38: // JR C r8 [----]
+            if (this.F.c) this.jr(int8(this.nextByte()))
+            break
+        case 0x39: // ADD HL SP [-0HC]
+            
+            break
+        case 0x3a: // LD A (HL-) [----]
+            this.ld_A_valHLdec()
+            break
+        case 0x3b: // DEC SP  [----]
+            this.dec_reg16(R16.SP)
+            break
+        case 0x3c: // INC A  [Z0H-]
+            this.inc_reg8(R8.A)
+            break
+        case 0x3d: // DEC A  [Z1H-]
+            this.dec_reg8(R8.A)
+            break
+        case 0x3e: // LD A d8 [----]
+            this.A = this.nextByte()
+            break
+        case 0x3f: // CCF   [-00C]
+            
+            break
+
+
+
         case 0x40: // LD B B [----]
             this.B = this.B
             break
@@ -178,7 +386,7 @@ if (!prefixed) {
             this.ld_valHL_r8(R8.L)
             break
         case 0x76: // HALT   [----]
-            this.halted = true
+            this.halt()
             break
         case 0x77: // LD (HL) A [----]
             this.ld_valHL_r8(R8.A)
@@ -289,25 +497,25 @@ if (!prefixed) {
             break
 
         case 0x98: // SBC A B [Z1HC]
-            this.sbc(this.A)
+            this.sbc(this.B)
             break
         case 0x99: // SBC A C [Z1HC]
-            this.sbc(this.A)
+            this.sbc(this.C)
             break
         case 0x9a: // SBC A D [Z1HC]
-            this.sbc(this.A)
+            this.sbc(this.D)
             break
         case 0x9b: // SBC A E [Z1HC]
-            this.sbc(this.A)
+            this.sbc(this.E)
             break
         case 0x9c: // SBC A H [Z1HC]
-            this.sbc(this.A)
+            this.sbc(this.H)
             break
         case 0x9d: // SBC A L [Z1HC]
-            this.sbc(this.A)
+            this.sbc(this.L)
             break
         case 0x9e: // SBC A (HL) [Z1HC]
-            this.sbc(this.A)
+            this.sbc(this.mmu.rb(this.getHL()))
             break
         case 0x9f: // SBC A A [Z1HC]
             this.sbc(this.A)
@@ -415,6 +623,181 @@ if (!prefixed) {
             break
         case 0xbf: // CP A  [Z1HC]
             this.cp(this.A)
+            break
+
+
+
+        case 0xc0: // RET NZ  [----]
+            if (!this.F.z) this.ret()
+            break
+        case 0xc1: // POP BC  [----]
+            this.pop(R16.BC)
+            break
+        case 0xc2: // JP NZ a16 [----]
+            if (!this.F.z) this.jp(this.nextWord())
+            break
+        case 0xc3: // JP a16  [----]
+            this.jp(this.nextWord())
+            break
+        case 0xc4: // CALL NZ a16 [----]
+            if (!this.F.z) this.call(this.nextWord())
+            break
+        case 0xc5: // PUSH BC  [----]
+            this.push(R16.BC)
+            break
+        case 0xc6: // ADD A d8 [Z0HC]
+            this.add(this.nextByte())
+            break
+        case 0xc7: // RST 00H  [----]
+            this.rst(RSTVector.$00)
+            break
+
+        case 0xc8: // RET Z  [----]
+            if (this.F.z) this.ret()
+            break
+        case 0xc9: // RET   [----]
+            this.ret()
+            break
+        case 0xca: // JP Z a16 [----]
+            if (this.F.z) this.jp(this.nextWord())
+            break
+        case 0xcb: // PREFIX CB  [----]
+            
+            break
+        case 0xcc: // CALL Z a16 [----]
+            if (this.F.z) this.call(this.nextWord())
+            break
+        case 0xcd: // CALL a16  [----]
+            this.call(this.nextWord())
+            break
+        case 0xce: // ADC A d8 [Z0HC]
+            this.adc(this.nextByte())
+            break
+        case 0xcf: // RST 08H  [----]
+            this.rst(RSTVector.$08)
+            break
+
+
+
+        case 0xd0: // RET NC  [----]
+            if (!this.F.c) this.ret()
+            break
+        case 0xd1: // POP DE  [----]
+            this.pop(R16.DE)
+            break
+        case 0xd2: // JP NC a16 [----]
+            if (!this.F.c) this.jp(this.nextWord())
+            break
+        case 0xd4: // CALL NC a16 [----]
+            if (!this.F.c) this.call(this.nextWord())
+            break
+        case 0xd5: // PUSH DE  [----]
+            this.push(R16.DE)
+            break
+        case 0xd6: // SUB d8  [Z1HC]
+            this.sub(this.nextByte())
+            break
+        case 0xd7: // RST 10H  [----]
+            this.rst(RSTVector.$10)
+            break
+
+        case 0xd8: // RET C  [----]
+            if (this.F.c) this.ret()
+            break
+        case 0xd9: // RETI   [----]
+            this.reti()
+            break
+        case 0xda: // JP C a16 [----]
+            if (this.F.c) this.jp(this.nextWord())
+            break
+        case 0xdc: // CALL C a16 [----]
+            if (this.F.c) this.call(this.nextWord())
+            break
+        case 0xde: // SBC A d8 [Z1HC]
+            this.sbc(this.nextByte())
+            break
+        case 0xdf: // RST 18H  [----]
+            this.rst(RSTVector.$18)
+            break
+
+
+
+        case 0xe0: // LDH (a8) A [----]
+            
+            break
+        case 0xe1: // POP HL  [----]
+            this.pop(R16.HL)
+            break
+        case 0xe2: // LD (C) A [----]
+            
+            break
+        case 0xe5: // PUSH HL  [----]
+            this.push(R16.HL)
+            break
+        case 0xe6: // AND d8  [Z010]
+            this.and(this.nextByte())
+            break
+        case 0xe7: // RST 20H  [----]
+            this.rst(RSTVector.$20)
+            break
+
+        case 0xe8: // ADD SP r8 [00HC]
+            
+            break
+        case 0xe9: // JP (HL)  [----]
+            
+            break
+        case 0xea: // LD (a16) A [----]
+            
+            break
+        case 0xee: // XOR d8  [Z000]
+            this.xor(this.nextByte())
+            break
+        case 0xef: // RST 28H  [----]
+            this.rst(RSTVector.$28)
+            break
+
+
+
+        case 0xf0: // LDH A (a8) [----]
+            
+            break
+        case 0xf1: // POP AF  [ZNHC]
+            this.pop_AF()
+            break
+        case 0xf2: // LD A (C) [----]
+            
+            break
+        case 0xf3: // DI   [----]
+            
+            break
+        case 0xf5: // PUSH AF  [----]
+            this.push_AF()
+            break
+        case 0xf6: // OR d8  [Z000]
+            this.or(this.nextByte())
+            break
+        case 0xf7: // RST 30H  [----]
+            this.rst(RSTVector.$30)
+            break
+
+        case 0xf8: // LD HL SP+r8 [00HC]
+            this.ld_HL_SPplusInt8()
+            break
+        case 0xf9: // LD SP HL [----]
+            this.SP = this.HL
+            break
+        case 0xfa: // LD A (a16) [----]
+            
+            break
+        case 0xfb: // EI   [----]
+            
+            break
+        case 0xfe: // CP d8  [Z1HC]
+            this.cp(this.nextByte())
+            break
+        case 0xff: // RST 38H  [----]
+            this.rst(RSTVector.$38)
             break
 
 

@@ -9,7 +9,7 @@ import {
     subHalfCarriesByte,
     addHalfCarriesWord
 } from './utils'
-import { prefixedOpcodeTable, unprefixedOpcodeTable } from './opcodes'
+import { prefixedOpcodeTable, unprefixedOpcodeTable } from './opcodes/opcodes'
 
 // 8 bit registers
 export enum R8 {
@@ -19,6 +19,10 @@ export enum R8 {
 // 16 bit registers
 export enum R16 {
     AF, BC, DE, HL, SP
+}
+
+export enum RSTVector {
+    $00, $08, $10, $18, $20, $28, $30, $38
 }
 
 export class CPU {
@@ -136,6 +140,18 @@ export class CPU {
     setHL(word: number) {
         this.H = word & 0xFF00 >> 8 
         this.L = word & 0x00FF
+    }
+
+    // reads next byte at PC and advances PC
+    nextByte() {
+        return this.mmu.rb(this.PC += 1)
+    }
+
+    // reads next word at PC and advances PC
+    nextWord() {
+        const word = this.mmu.rw(this.PC += 1)
+        this.PC += 1
+        return word
     }
 
     // executes the next instruction and returns the number of cycles consumed.
