@@ -17,11 +17,11 @@ let unprefixed = ""
 Object.values(opcodes.unprefixed).forEach( opc => {
     let code = ''
     const addr = parseInt(opc.addr)
-    let fn = `this.${opc.mnemonic.toLowerCase()}`
+    let fn = `cpu.${opc.mnemonic.toLowerCase()}`
 
     // stop
     if (addr === 0x10) {
-        code += `this.stop()`
+        code += `cpu.stop()`
     }
 
     // JR r8
@@ -45,9 +45,9 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         } else if (addr === 0xf8) { // LD HL SP+r8
             code += `${fn}_HL_SPplusInt8()`
         } else if (addr === 0xf9) { // LD SP HL
-            code += `this.SP = this.HL`
+            code += `cpu.SP = cpu.HL`
         } else { // LD [reg16] d16
-            code += `this.set${opc.operand1}(this.nextWord())`
+            code += `cpu.set${opc.operand1}(cpu.nextWord())`
         }
     }
 
@@ -96,24 +96,24 @@ Object.values(opcodes.unprefixed).forEach( opc => {
 
     // misc 8 bit loads
     const misc_8bit_loads_map = {
-        0x02: `this.ld_valBC_A()`, // LD (BC) A
-        0x12: `this.ld_valDE_A()`, // LD (DE) A
-        0x0a: `this.ld_A_valBC()`, // LD A (BC)
-        0x1a: `this.ld_A_valDE()`, // LD A (DE)
+        0x02: `cpu.ld_valBC_A()`, // LD (BC) A
+        0x12: `cpu.ld_valDE_A()`, // LD (DE) A
+        0x0a: `cpu.ld_A_valBC()`, // LD A (BC)
+        0x1a: `cpu.ld_A_valDE()`, // LD A (DE)
 
-        0x22: `this.ld_valHLinc_A()`, // LD (HL+) A
-        0x32: `this.ld_valHLdec_A()`, // LD (HL-) A
-        0x2a: `this.ld_A_valHLinc()`, // LD A (HL+)
-        0x3a: `this.ld_A_valHLdec()`, // LD A (HL-)
+        0x22: `cpu.ld_valHLinc_A()`, // LD (HL+) A
+        0x32: `cpu.ld_valHLdec_A()`, // LD (HL-) A
+        0x2a: `cpu.ld_A_valHLinc()`, // LD A (HL+)
+        0x3a: `cpu.ld_A_valHLdec()`, // LD A (HL-)
 
-        0x06: `this.B = this.nextByte()`, // LD B d8
-        0x0e: `this.C = this.nextByte()`, // LD C d8
-        0x16: `this.D = this.nextByte()`, // LD D d8
-        0x1e: `this.E = this.nextByte()`, // LD E d8
-        0x26: `this.H = this.nextByte()`, // LD H d8
-        0x2e: `this.L = this.nextByte()`, // LD L d8
-        0x36: `this.mmu.wb(this.getHL(), this.nextByte())`, // LD (HL) d8
-        0x3e: `this.A = this.nextByte()` // LD A d8
+        0x06: `cpu.B = cpu.nextByte()`, // LD B d8
+        0x0e: `cpu.C = cpu.nextByte()`, // LD C d8
+        0x16: `cpu.D = cpu.nextByte()`, // LD D d8
+        0x1e: `cpu.E = cpu.nextByte()`, // LD E d8
+        0x26: `cpu.H = cpu.nextByte()`, // LD H d8
+        0x2e: `cpu.L = cpu.nextByte()`, // LD L d8
+        0x36: `cpu.mmu.wb(cpu.getHL(), cpu.nextByte())`, // LD (HL) d8
+        0x3e: `cpu.A = cpu.nextByte()` // LD A d8
     }
     if (misc_8bit_loads_map[addr]) {
         code += misc_8bit_loads_map[addr]
@@ -123,13 +123,13 @@ Object.values(opcodes.unprefixed).forEach( opc => {
     // and HALT 0x76
     if (addr >= 0x40 && addr <= 0x7f) { // LD A B etc
         if (addr === 0x76) { // HALT
-            code = `this.halt()`
+            code = `cpu.halt()`
         } else if (opc.operand2 === "(HL)") {
-            code = `this.ld_r8_valHL(R8.${opc.operand1})`
+            code = `cpu.ld_r8_valHL(R8.${opc.operand1})`
         } else if (opc.operand1 === "(HL)") {
-            code = `this.ld_valHL_r8(R8.${opc.operand2})`
+            code = `cpu.ld_valHL_r8(R8.${opc.operand2})`
         } else {
-            code = `this.${opc.operand1} = this.${opc.operand2}`
+            code = `cpu.${opc.operand1} = cpu.${opc.operand2}`
         }
     }
 
@@ -145,16 +145,16 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         0xfe, // CP d8
     ]
     if ((addr >= 0x80 && addr < 0xc0) || d8_arith_instrs.includes(addr)) { 
-        const fn = `this.${opc.mnemonic.toLowerCase()}`
+        const fn = `cpu.${opc.mnemonic.toLowerCase()}`
         const operand = ["ADD", "ADC", "SBC"].includes(opc.mnemonic)
             ? opc.operand2 // ADC, ADC, SBC all have 2 operands and the first is always A
             : opc.operand1 // SUB, AND, XOR, OR, CP all have 1 operand, A is implied
         if (operand === "(HL)") {
-            code = `${fn}(this.mmu.rb(this.getHL()))`
+            code = `${fn}(cpu.mmu.rb(cpu.getHL()))`
         } else if (operand === "d8") {
-            code = `${fn}(this.nextByte())`
+            code = `${fn}(cpu.nextByte())`
         } else { // operand is 8 bit register, like A,B,C etc
-            code = `${fn}(this.${operand})`
+            code = `${fn}(cpu.${operand})`
         }
     }
 
@@ -168,19 +168,19 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         0xd9, // RETI
     ]
     if (return_instrs.includes(addr)) { 
-        const fn = `this.${opc.mnemonic.toLowerCase()}`
+        const fn = `cpu.${opc.mnemonic.toLowerCase()}`
         switch(opc.operand1) {
             case 'NZ':
-                code += `if (!this.F.z) `
+                code += `if (!cpu.F.z) `
                 break
             case 'NC':
-                code += `if (!this.F.c) `
+                code += `if (!cpu.F.c) `
                 break
             case 'Z':
-                code += `if (this.F.z) `
+                code += `if (cpu.F.z) `
                 break
             case 'C':
-                code += `if (this.F.c) `
+                code += `if (cpu.F.c) `
                 break
         } 
         code += `${fn}()`
@@ -199,7 +199,7 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         0xf5, // PUSH AF
     ]
     if (pop_push_instrs.includes(addr)) {
-        const fn = `this.${opc.mnemonic.toLowerCase()}`
+        const fn = `cpu.${opc.mnemonic.toLowerCase()}`
         if (addr === 0xf1 || addr === 0xf5) {
             code += `${fn}_AF()`
         } else {
@@ -230,22 +230,22 @@ Object.values(opcodes.unprefixed).forEach( opc => {
     if (jump_instrs.includes(addr)) {
         switch(opc.operand1) {
             case 'NZ':
-                code += `if (!this.F.z) `
+                code += `if (!cpu.F.z) `
                 break
             case 'NC':
-                code += `if (!this.F.c) `
+                code += `if (!cpu.F.c) `
                 break
             case 'Z':
-                code += `if (this.F.z) `
+                code += `if (cpu.F.z) `
                 break
             case 'C':
-                code += `if (this.F.c) `
+                code += `if (cpu.F.c) `
                 break
         }
         if (opc.mnemonic === "JR") {
-            code += `${fn}(int8(this.nextByte()))`
+            code += `${fn}(int8(cpu.nextByte()))`
         } else {
-            code += `${fn}(this.nextWord())`
+            code += `${fn}(cpu.nextWord())`
         }
     }
 
@@ -261,7 +261,7 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         0xff, // RST 38H
     ]
     if (rst_instrs.includes(addr)) {
-        const fn = `this.${opc.mnemonic.toLowerCase()}`
+        const fn = `cpu.${opc.mnemonic.toLowerCase()}`
         code += `${fn}(RSTVector.$${opc.operand1.slice(0, -1)})`
     }
 
@@ -281,14 +281,14 @@ Object.values(opcodes.cbprefixed).forEach( opc => {
     const addr = parseInt(opc.addr)
 
     if (addr < 0x40) { // RLC, RRC, RL, RR, SLA, SRA, SWAP, SRL
-        const fn = `this.${opc.mnemonic.toLowerCase()}`
+        const fn = `cpu.${opc.mnemonic.toLowerCase()}`
         if (opc.operand1 === "(HL)") {
             code = `${fn}_valHL()`
         } else {
             code = `${fn}_r8(R8.${opc.operand1})`
         }
     } else if (addr <= 0xFF) { // BIT, RES, SET
-        const fn = `this.${opc.mnemonic.toLowerCase()}`
+        const fn = `cpu.${opc.mnemonic.toLowerCase()}`
         if (opc.operand2 === "(HL)") {
             code = `${fn}_n_valHL(${opc.operand1})`
         } else {
@@ -309,8 +309,9 @@ Object.values(opcodes.cbprefixed).forEach( opc => {
 const content = `
 // generated by \`node ${path.basename(__filename)}\` 
 import { CPU, R8, R16, RSTVector } from "../cpu"
+import { int8 } from "../utils"
 
-export const execute = (c: CPU, instr: number, cbprefixed: boolean) => {
+export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
     if (!cbprefixed) {
         switch(instr) {
             ${unprefixed}
