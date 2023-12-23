@@ -1,4 +1,5 @@
 import { MMU } from './mmu'
+import { execute } from './opcodes/execute'
 import {
     uint8,
     uint16,
@@ -168,7 +169,7 @@ export class CPU {
 
         const opcData = prefixed ? prefixedOpcodeTable[opcode] : unprefixedOpcodeTable[opcode]
 
-        this.execute(opcode, prefixed)
+        execute(this, opcode, prefixed)
 
         if (this.jumped) {
             return opcData.cycles
