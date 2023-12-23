@@ -186,376 +186,605 @@ export class CPU {
                     break
                 case 0x06: // LD B d8 [----]
                     this.ld_r8_d8(R8.B)
-            
+                    break
                 case 0x7: // RLCA   [000C]
-                
+                    this.rlc_A()
+                    break
+
                 case 0x8: // LD (a16) SP [----]
-                
+                    this.ld_a16_SP() 
+                    break
                 case 0x9: // ADD HL BC [-0HC]
-                
+                    this.add_HL_r16(R16.BC)
+                    break
                 case 0xa: // LD A (BC) [----]
-                
+                    this.A = this.mmu.rb(this.getBC())
+                    break
                 case 0xb: // DEC BC  [----]
-                
+                    this.dec_r16(R16.BC) 
+                    break
                 case 0xc: // INC C  [Z0H-]
-                
+                    this.inc_r8(R8.C) 
+                    break
                 case 0xd: // DEC C  [Z1H-]
-                
+                    this.dec_r8(R8.C) 
+                    break
                 case 0xe: // LD C d8 [----]
-                
+                    this.ld_r8_d8(R8.C) 
+                    break
                 case 0xf: // RRCA   [000C]
-                
+                    this.rrc_A()
+                    break
+                    
+
+
                 case 0x10: // STOP 0  [----]
-                
+                    this.stopped = true
+                    break
                 case 0x11: // LD DE d16 [----]
-                
+                    this.ld_r16_d16(R16.DE)                
+                    break
                 case 0x12: // LD (DE) A [----]
-                
+                    this.ld_valr16_A(R16.DE)
+                    break
                 case 0x13: // INC DE  [----]
-                
+                    this.inc_r16(R16.DE)
+                    break
                 case 0x14: // INC D  [Z0H-]
-                
+                    this.inc_r8(R8.D)
+                    break
                 case 0x15: // DEC D  [Z1H-]
-                
+                    this.dec_r8(R8.D) 
+                    break
                 case 0x16: // LD D d8 [----]
-                
+                    this.ld_r8_d8(R8.D)
+                    break
                 case 0x17: // RLA   [000C]
+                    this.rl_A()
+                    break
                 
                 case 0x18: // JR r8  [----]
-                
+                    this.jr_int8()
+                    break
                 case 0x19: // ADD HL DE [-0HC]
-                
+                    this.add_HL_r16(R16.DE) 
+                    break
                 case 0x1a: // LD A (DE) [----]
-                
+                    this.A = this.mmu.rb(this.getDE())
+                    break
                 case 0x1b: // DEC DE  [----]
-                
+                    this.dec_r16(R16.DE) 
+                    break
                 case 0x1c: // INC E  [Z0H-]
-                
+                    this.inc_r8(R8.E) 
+                    break
                 case 0x1d: // DEC E  [Z1H-]
-                
+                    this.dec_r8(R8.E) 
+                    break
                 case 0x1e: // LD E d8 [----]
-                
+                    this.ld_r8_d8(R8.E) 
+                    break
                 case 0x1f: // RRA   [000C]
+                    this.rr_A()
+                    break
                 
                 case 0x20: // JR NZ r8 [----]
-                
+                    if (!this.F.z) this.jr_int8()
+                    break
                 case 0x21: // LD HL d16 [----]
-                
+                    this.ld_r16_d16(R16.HL)
+                    break
                 case 0x22: // LD (HL+) A [----]
-                
+                    this.ld_valHLinc_A()
+                    break
                 case 0x23: // INC HL  [----]
-                
+                    this.inc_r16(R16.HL)
+                    break
                 case 0x24: // INC H  [Z0H-]
-                
+                    this.inc_r8(R8.H)
+                    break
                 case 0x25: // DEC H  [Z1H-]
-                
+                    this.dec_r8(R8.H) 
+                    break
                 case 0x26: // LD H d8 [----]
-                
+                    this.ld_r8_d8(R8.H) 
+                    break
                 case 0x27: // DAA   [Z-0C]
-                
+                    this.daa() 
+                    break
+
                 case 0x28: // JR Z r8 [----]
-                
+                    if (this.F.z) this.jr_int8()                
+                    break
                 case 0x29: // ADD HL HL [-0HC]
-                
+                    this.add_HL_r16(R16.HL) 
+                    break
                 case 0x2a: // LD A (HL+) [----]
-                
+                    this.ld_A_valHLinc() 
+                    break
                 case 0x2b: // DEC HL  [----]
-                
+                    this.dec_r16(R16.HL) 
+                    break
                 case 0x2c: // INC L  [Z0H-]
-                
+                    this.inc_r8(R8.L) 
+                    break
                 case 0x2d: // DEC L  [Z1H-]
-                
+                    this.dec_r8(R8.L) 
+                    break
                 case 0x2e: // LD L d8 [----]
-                
+                    this.ld_r8_d8(R8.L)
+                    break
                 case 0x2f: // CPL   [-11-]
+                    this.cpl()
+                    break
                 
+
+
                 case 0x30: // JR NC r8 [----]
-                
+                    if (!this.F.c) this.jr_int8()
+                    break
                 case 0x31: // LD SP d16 [----]
-                
+                    this.ld_SP_d16() 
+                    break
                 case 0x32: // LD (HL-) A [----]
-                
+                    this.ld_valHLdec_A() 
+                    break
                 case 0x33: // INC SP  [----]
-                
+                    this.inc_r16(R16.SP)
+                    break
                 case 0x34: // INC (HL)  [Z0H-]
-                
+                    this.inc_valHL() 
+                    break
                 case 0x35: // DEC (HL)  [Z1H-]
-                
+                    this.dec_valHL() 
+                    break
                 case 0x36: // LD (HL) d8 [----]
-                
+                    this.ld_valHL_d8() 
+                    break
                 case 0x37: // SCF   [-001]
+                    this.scf()
+                    break
                 
                 case 0x38: // JR C r8 [----]
-                
+                    if (this.F.c) this.jr_int8() 
+                    break
                 case 0x39: // ADD HL SP [-0HC]
-                
+                    this.add_HL_r16(R16.SP) 
+                    break
                 case 0x3a: // LD A (HL-) [----]
-                
+                    this.ld_A_valHLdec() 
+                    break
                 case 0x3b: // DEC SP  [----]
-                
+                    this.dec_r16(R16.SP) 
+                    break
                 case 0x3c: // INC A  [Z0H-]
-                
+                    this.inc_r8(R8.A) 
+                    break
                 case 0x3d: // DEC A  [Z1H-]
-                
+                    this.dec_r8(R8.A) 
+                    break
                 case 0x3e: // LD A d8 [----]
-                
+                    this.ld_r8_d8(R8.A)
+                    break
                 case 0x3f: // CCF   [-00C]
+                    this.ccf()
+                    break
                 
+
+
                 case 0x40: // LD B B [----]
-                
+                    this.B = this.B
+                    break
                 case 0x41: // LD B C [----]
-                
+                    this.B = this.C
+                    break
                 case 0x42: // LD B D [----]
-                
+                    this.B = this.D
+                    break
                 case 0x43: // LD B E [----]
-                
+                    this.B = this.E
+                    break
                 case 0x44: // LD B H [----]
-                
+                    this.B = this.H
+                    break
                 case 0x45: // LD B L [----]
-                
+                    this.B = this.L
+                    break
                 case 0x46: // LD B (HL) [----]
-                
+                    this.ld_r8_valHL(R8.B)
+                    break
                 case 0x47: // LD B A [----]
-                
+                    this.B = this.A
+                    break
+        
                 case 0x48: // LD C B [----]
-                
+                    this.C = this.B
+                    break
                 case 0x49: // LD C C [----]
-                
+                    this.C = this.C
+                    break
                 case 0x4a: // LD C D [----]
-                
+                    this.C = this.D
+                    break
                 case 0x4b: // LD C E [----]
-                
+                    this.C = this.E
+                    break
                 case 0x4c: // LD C H [----]
-                
+                    this.C = this.H
+                    break
                 case 0x4d: // LD C L [----]
-                
+                    this.C = this.L
+                    break
                 case 0x4e: // LD C (HL) [----]
-                
+                    this.ld_r8_valHL(R8.C)
+                    break
                 case 0x4f: // LD C A [----]
-                
+                    this.C = this.A
+                    break
+        
+        
+        
                 case 0x50: // LD D B [----]
-                
+                    this.D = this.B
+                    break
                 case 0x51: // LD D C [----]
-                
+                    this.D = this.C
+                    break
                 case 0x52: // LD D D [----]
-                
+                    this.D = this.D
+                    break
                 case 0x53: // LD D E [----]
-                
+                    this.D = this.E
+                    break
                 case 0x54: // LD D H [----]
-                
+                    this.D = this.H
+                    break
                 case 0x55: // LD D L [----]
-                
+                    this.D = this.L
+                    break
                 case 0x56: // LD D (HL) [----]
-                
+                    this.ld_r8_valHL(R8.D)
+                    break
                 case 0x57: // LD D A [----]
-                
+                    this.D = this.A
+                    break
+        
                 case 0x58: // LD E B [----]
-                
+                    this.E = this.B
+                    break
                 case 0x59: // LD E C [----]
-                
+                    this.E = this.C
+                    break
                 case 0x5a: // LD E D [----]
-                
+                    this.E = this.D
+                    break
                 case 0x5b: // LD E E [----]
-                
+                    this.E = this.E
+                    break
                 case 0x5c: // LD E H [----]
-                
+                    this.E = this.H
+                    break
                 case 0x5d: // LD E L [----]
-                
+                    this.E = this.L
+                    break
                 case 0x5e: // LD E (HL) [----]
-                
+                    this.ld_r8_valHL(R8.E)
+                    break
                 case 0x5f: // LD E A [----]
-                
+                    this.E = this.A
+                    break
+        
+        
+        
                 case 0x60: // LD H B [----]
-                
+                    this.H = this.B
+                    break
                 case 0x61: // LD H C [----]
-                
+                    this.H = this.C
+                    break
                 case 0x62: // LD H D [----]
-                
+                    this.H = this.D
+                    break
                 case 0x63: // LD H E [----]
-                
+                    this.H = this.E
+                    break
                 case 0x64: // LD H H [----]
-                
+                    this.H = this.H
+                    break
                 case 0x65: // LD H L [----]
-                
+                    this.H = this.L
+                    break
                 case 0x66: // LD H (HL) [----]
-                
+                    this.ld_r8_valHL(R8.H)
+                    break
                 case 0x67: // LD H A [----]
-                
+                    this.H = this.A
+                    break
+        
                 case 0x68: // LD L B [----]
-                
+                    this.L = this.B
+                    break
                 case 0x69: // LD L C [----]
-                
+                    this.L = this.C
+                    break
                 case 0x6a: // LD L D [----]
-                
+                    this.L = this.D
+                    break
                 case 0x6b: // LD L E [----]
-                
+                    this.L = this.E
+                    break
                 case 0x6c: // LD L H [----]
-                
+                    this.L = this.H
+                    break
                 case 0x6d: // LD L L [----]
-                
+                    this.L = this.L
+                    break
                 case 0x6e: // LD L (HL) [----]
-                
+                    this.ld_r8_valHL(R8.L)
+                    break
                 case 0x6f: // LD L A [----]
-                
+                    this.L = this.A
+                    break
+        
+        
+        
                 case 0x70: // LD (HL) B [----]
-                
+                    this.ld_valHL_r8(R8.B)
+                    break
                 case 0x71: // LD (HL) C [----]
-                
+                    this.ld_valHL_r8(R8.C)
+                    break
                 case 0x72: // LD (HL) D [----]
-                
+                    this.ld_valHL_r8(R8.D)
+                    break
                 case 0x73: // LD (HL) E [----]
-                
+                    this.ld_valHL_r8(R8.E)
+                    break
                 case 0x74: // LD (HL) H [----]
-                
+                    this.ld_valHL_r8(R8.H)
+                    break
                 case 0x75: // LD (HL) L [----]
-                
+                    this.ld_valHL_r8(R8.L)
+                    break
                 case 0x76: // HALT   [----]
-                
+                    this.halted = true
+                    break
                 case 0x77: // LD (HL) A [----]
-                
+                    this.ld_valHL_r8(R8.A)
+                    break
+        
                 case 0x78: // LD A B [----]
-                
+                    this.A = this.B
+                    break
                 case 0x79: // LD A C [----]
-                
+                    this.A = this.C
+                    break
                 case 0x7a: // LD A D [----]
-                
+                    this.A = this.D
+                    break
                 case 0x7b: // LD A E [----]
-                
+                    this.A = this.E
+                    break
                 case 0x7c: // LD A H [----]
-                
+                    this.A = this.H
+                    break
                 case 0x7d: // LD A L [----]
-                
+                    this.A = this.L
+                    break
                 case 0x7e: // LD A (HL) [----]
-                
+                    this.ld_r8_valHL(R8.A)
+                    break
                 case 0x7f: // LD A A [----]
-                
+                    this.A = this.A
+                    break
+        
+        
+        
                 case 0x80: // ADD A B [Z0HC]
-                
+                    this.add(this.B)
+                    break
                 case 0x81: // ADD A C [Z0HC]
-                
+                    this.add(this.C)
+                    break
                 case 0x82: // ADD A D [Z0HC]
-                
+                    this.add(this.D)
+                    break
                 case 0x83: // ADD A E [Z0HC]
-                
+                    this.add(this.E)
+                    break
                 case 0x84: // ADD A H [Z0HC]
-                
+                    this.add(this.H)
+                    break
                 case 0x85: // ADD A L [Z0HC]
-                
+                    this.add(this.L)
+                    break
                 case 0x86: // ADD A (HL) [Z0HC]
-                
+                    this.add(this.mmu.rb(this.getHL()))
+                    break
                 case 0x87: // ADD A A [Z0HC]
-                
+                    this.add(this.A)
+                    break
+        
                 case 0x88: // ADC A B [Z0HC]
-                
+                    this.adc(this.B)
+                    break
                 case 0x89: // ADC A C [Z0HC]
-                
+                    this.adc(this.C)
+                    break
                 case 0x8a: // ADC A D [Z0HC]
-                
+                    this.adc(this.D)
+                    break
                 case 0x8b: // ADC A E [Z0HC]
-                
+                    this.adc(this.E)
+                    break
                 case 0x8c: // ADC A H [Z0HC]
-                
+                    this.adc(this.H)
+                    break
                 case 0x8d: // ADC A L [Z0HC]
-                
+                    this.adc(this.L)
+                    break
                 case 0x8e: // ADC A (HL) [Z0HC]
-                
+                    this.adc(this.mmu.rb(this.getHL()))
+                    break
                 case 0x8f: // ADC A A [Z0HC]
-                
+                    this.adc(this.A)
+                    break
+        
+        
+        
                 case 0x90: // SUB B  [Z1HC]
-                
+                    this.sub(this.B)
+                    break
                 case 0x91: // SUB C  [Z1HC]
-                
+                    this.sub(this.C)
+                    break
                 case 0x92: // SUB D  [Z1HC]
-                
+                    this.sub(this.D)
+                    break
                 case 0x93: // SUB E  [Z1HC]
-                
+                    this.sub(this.E)
+                    break
                 case 0x94: // SUB H  [Z1HC]
-                
+                    this.sub(this.H)
+                    break
                 case 0x95: // SUB L  [Z1HC]
-                
+                    this.sub(this.L)
+                    break
                 case 0x96: // SUB (HL)  [Z1HC]
-                
+                    this.sub(this.mmu.rb(this.getHL()))
+                    break
                 case 0x97: // SUB A  [Z1HC]
-                
+                    this.sub(this.A)
+                    break
+        
                 case 0x98: // SBC A B [Z1HC]
-                
+                    this.sbc(this.A)
+                    break
                 case 0x99: // SBC A C [Z1HC]
-                
+                    this.sbc(this.A)
+                    break
                 case 0x9a: // SBC A D [Z1HC]
-                
+                    this.sbc(this.A)
+                    break
                 case 0x9b: // SBC A E [Z1HC]
-                
+                    this.sbc(this.A)
+                    break
                 case 0x9c: // SBC A H [Z1HC]
-                
+                    this.sbc(this.A)
+                    break
                 case 0x9d: // SBC A L [Z1HC]
-                
+                    this.sbc(this.A)
+                    break
                 case 0x9e: // SBC A (HL) [Z1HC]
-                
+                    this.sbc(this.A)
+                    break
                 case 0x9f: // SBC A A [Z1HC]
-                
+                    this.sbc(this.A)
+                    break
+        
+        
+        
                 case 0xa0: // AND B  [Z010]
-                
+                    this.and(this.B)
+                    break
                 case 0xa1: // AND C  [Z010]
-                
+                    this.and(this.C)
+                    break
                 case 0xa2: // AND D  [Z010]
-                
+                    this.and(this.D)
+                    break
                 case 0xa3: // AND E  [Z010]
-                
+                    this.and(this.E)
+                    break
                 case 0xa4: // AND H  [Z010]
-                
+                    this.and(this.H)
+                    break
                 case 0xa5: // AND L  [Z010]
-                
+                    this.and(this.L)
+                    break
                 case 0xa6: // AND (HL)  [Z010]
-                
+                    this.and(this.mmu.rb(this.getHL()))
+                    break
                 case 0xa7: // AND A  [Z010]
-                
+                    this.and(this.A)
+                    break
+        
                 case 0xa8: // XOR B  [Z000]
-                
+                    this.xor(this.B)
+                    break
                 case 0xa9: // XOR C  [Z000]
-                
+                    this.xor(this.C)
+                    break
                 case 0xaa: // XOR D  [Z000]
-                
+                    this.xor(this.D)
+                    break
                 case 0xab: // XOR E  [Z000]
-                
+                    this.xor(this.E)
+                    break
                 case 0xac: // XOR H  [Z000]
-                
+                    this.xor(this.H)
+                    break
                 case 0xad: // XOR L  [Z000]
-                
+                    this.xor(this.L)
+                    break
                 case 0xae: // XOR (HL)  [Z000]
-                
+                    this.xor(this.mmu.rb(this.getHL()))
+                    break
                 case 0xaf: // XOR A  [Z000]
-                
+                    this.xor(this.A)
+                    break
+        
+        
+        
                 case 0xb0: // OR B  [Z000]
-                
+                    this.or(this.B)
+                    break
                 case 0xb1: // OR C  [Z000]
-                
+                    this.or(this.C)
+                    break
                 case 0xb2: // OR D  [Z000]
-                
+                    this.or(this.D)
+                    break
                 case 0xb3: // OR E  [Z000]
-                
+                    this.or(this.E)
+                    break
                 case 0xb4: // OR H  [Z000]
-                
+                    this.or(this.H)
+                    break
                 case 0xb5: // OR L  [Z000]
-                
+                    this.or(this.L)
+                    break
                 case 0xb6: // OR (HL)  [Z000]
-                
+                    this.or(this.mmu.rb(this.getHL()))
+                    break
                 case 0xb7: // OR A  [Z000]
-                
+                    this.or(this.A)
+                    break
+        
                 case 0xb8: // CP B  [Z1HC]
-                
+                    this.cp(this.B)
+                    break
                 case 0xb9: // CP C  [Z1HC]
-                
+                    this.cp(this.C)
+                    break
                 case 0xba: // CP D  [Z1HC]
-                
+                    this.cp(this.D)
+                    break
                 case 0xbb: // CP E  [Z1HC]
-                
+                    this.cp(this.E)
+                    break
                 case 0xbc: // CP H  [Z1HC]
-                
+                    this.cp(this.H)
+                    break
                 case 0xbd: // CP L  [Z1HC]
-                
+                    this.cp(this.L)
+                    break
                 case 0xbe: // CP (HL)  [Z1HC]
-                
+                    this.cp(this.mmu.rb(this.getHL()))
+                    break
                 case 0xbf: // CP A  [Z1HC]
+                    this.cp(this.A)
+                    break
                 
                 case 0xc0: // RET NZ  [----]
                 
@@ -662,9 +891,11 @@ export class CPU {
                 case 0xfe: // CP d8  [Z1HC]
                 
                 case 0xff: // RST 38H  [----]
-                
-            
-            
+
+            }
+        } else {
+            switch(instr) {
+
                 case 0x0: // RLC B  [Z00C]
                 
                 case 0x1: // RLC C  [Z00C]
@@ -1177,11 +1408,6 @@ export class CPU {
                 
                 case 0xff: // SET 7 A [----]
                 
-                
-            }
-        } else {
-            switch(instr) {
-
             }
         }
     }
@@ -1211,6 +1437,11 @@ export class CPU {
         this.F.n = true
         this.F.h = subHalfCarriesByte(val, 1)
         // c -
+    }
+
+    // INC r16 [----]
+    inc_r16 = (reg16: R16) => {
+        this.setR16(reg16, this.getR16(reg16) + 1)
     }
 
     // LD r8 d8 [----]
@@ -1318,6 +1549,22 @@ export class CPU {
         this.setHL(uint16(hl + 1))
     }
 
+    // LD A (HL-) [---]
+    // sets A = (HL), then decrements HL
+    ld_A_valHLdec = () => {
+        const hl = this.getHL()
+        this.A = this.mmu.rb(hl)
+        this.setHL(uint16(hl - 1))
+    }
+
+    // LD (HL-) A [----]
+    // sets (HL) = A, then decrements HL
+    ld_valHLdec_A = () => {
+        const hl = this.getHL()
+        this.mmu.wb(hl, this.A)
+        this.setHL(uint16(hl - 1))
+    }
+
     // LD A (HL+) [---]
     // sets A = (HL), then increments HL
     ld_A_valHLinc = () => {
@@ -1409,7 +1656,7 @@ export class CPU {
     }
 
     // ADD A {r8, d8} [z0hc]
-    add_A = (byte: number) => {
+    add = (byte: number) => {
         const oldA = this.A
         this.A = uint8(this.A + byte)
 
@@ -1421,7 +1668,7 @@ export class CPU {
 
     // ADC A {r8, d8} [z0hc]
     // sets A = A + {r8, d8} + carry
-    adc_A = (val: number) => {
+    adc = (val: number) => {
         const carry = this.F.c ? 1 : 0
         const oldA = this.A
         this.A = uint8(this.A + val + carry)
@@ -1433,7 +1680,7 @@ export class CPU {
     }
 
     // SUB A {r8, d8} [z1hc]
-    sub_A = (val: number) => {
+    sub = (val: number) => {
         const oldA = this.A
         this.A = uint8(this.A - val)
 
@@ -1443,7 +1690,7 @@ export class CPU {
         this.F.c = oldA - val < 0
     }
 
-    sbc_A = (val: number) => {
+    sbc = (val: number) => {
         const carry = this.F.c ? 1 : 0
         const oldA = this.A
         this.A = uint8(this.A - val - carry)
@@ -1455,7 +1702,7 @@ export class CPU {
     }
 
     // AND A r8 [z010]
-    and_A = (val: number) => {
+    and = (val: number) => {
         this.A = this.A & val
 
         this.F.z = this.A === 0
@@ -1465,7 +1712,7 @@ export class CPU {
     }
 
     // XOR A r8 [z010]
-    xor_A = (val: number) => {
+    xor = (val: number) => {
         this.A = this.A | val
 
         this.F.z = this.A === 0
@@ -1475,13 +1722,25 @@ export class CPU {
     }
 
     // OR A r8 [z000]
-    or_A = (val: number) => {
+    or = (val: number) => {
         this.A = this.A | val
 
         this.F.z = this.A === 0
         this.F.n = false
         this.F.h = false
         this.F.c = false
+    }
+
+    // CP A r8 [z1hc]
+    // Compare A with value. Essentially a subtraction where you throw
+    // away the results.
+    cp = (val: number) => {
+        const result = this.A - val
+
+        this.F.z = result === 0
+        this.F.n = true
+        this.F.h = subHalfCarriesByte(this.A, val)
+        this.F.c = this.A - val < 0
     }
 
     // DAA [z-0c]
