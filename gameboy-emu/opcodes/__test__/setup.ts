@@ -23,7 +23,7 @@ export interface CPUState {
     A?: number, 
     B?: number, C?: number, D?: number
     E?: number, H?: number, L?: number
-    F?: [0|1, 0|1, 0|1, 0|1],
+    F?: number[],
 
     BC?: number, DE?: number, HL?: number
     SP?: number, PC?: number
@@ -56,33 +56,18 @@ export const setupCPU = (state: CPUState, mmu: MMU = new MMU()): CPU => {
     return cpu
 }
 
-export const dumpState = (cpu: CPU): CPUState => {
+export const dumpState = (cpu: CPU): Required<CPUState> => {
     // compare cpu to expected CPUState
-    const state: CPUState = {}
-    const {A, B, C, D, E, H, L, F,  SP, PC} = cpu
-    if (A !== undefined) state.A = cpu.A
-    if (B !== undefined) state.B = cpu.B
-    if (C !== undefined) state.C = cpu.C
-    if (D !== undefined) state.D = cpu.D
-    if (E !== undefined) state.E = cpu.E
-    if (H !== undefined) state.H = cpu.H
-    if (L !== undefined) state.L = cpu.L
-
-    if (F !== undefined) {
-        state.F = [
-            cpu.F.z ? 0 : 0,
-            cpu.F.n ? 0 : 0,
-            cpu.F.h ? 0 : 0,
-            cpu.F.c ? 0 : 0,
-        ]
+    return {
+        ...cpu,
+        F: [
+            cpu.F.z ? 1 : 0,
+            cpu.F.n ? 1 : 0,
+            cpu.F.h ? 1 : 0,
+            cpu.F.c ? 1 : 0,
+        ],
+        BC: cpu.getBC(),
+        DE: cpu.getDE(),
+        HL: cpu.getHL()
     }
-
-    if (BC !== undefined) state.BC = cpu.getBC()
-    if (DE !== undefined) state.DE = cpu.getDE()
-    if (HL !== undefined) state.HL = cpu.getHL()
-
-    if (SP !== undefined) state.SP = cpu.SP
-    if (PC !== undefined) state.PC = cpu.PC
-
-    return state
 }
