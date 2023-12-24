@@ -22,7 +22,7 @@ export const addHalfCarriesWord = (a: number, b: number): boolean => {
     return (((a & 0xFFF) + (b & 0xFFF)) & 0x1000) === 0x1000
 }
 
-const MAX_UINT8 = 0xFF
+export const MAX_UINT8 = 0xFF
 export const uint8 = (n: number) => {
     if (n < 0) {
         const mod = (n * -1) % MAX_UINT8
@@ -32,7 +32,7 @@ export const uint8 = (n: number) => {
     return n & MAX_UINT8
 }
 
-const MAX_UINT16 = 0xFFFF
+export const MAX_UINT16 = 0xFFFF
 export const uint16 = (n: number) => {
     if (n < 0) {
         const mod = (n * -1) % MAX_UINT16

@@ -22,8 +22,16 @@ export enum R16 {
     AF, BC, DE, HL, SP
 }
 
+// Memory addresses that can be jumped to by the RST instruction
 export enum RSTVector {
-    $00, $08, $10, $18, $20, $28, $30, $38
+    $00 = 0x00, 
+    $08 = 0x80,
+    $10 = 0x10, 
+    $18 = 0x18,
+    $20 = 0x20, 
+    $28 = 0x28, 
+    $30 = 0x30,
+    $38 = 0x38
 }
 
 export class CPU {
@@ -130,6 +138,10 @@ export class CPU {
     getHL(): number {
         return (this.H << 8) | this.L
     }
+    getSP(): number {
+        return this.SP
+    }
+
     setBC(word: number) {
         this.B = word & 0xFF00 >> 8 
         this.C = word & 0x00FF
@@ -141,6 +153,9 @@ export class CPU {
     setHL(word: number) {
         this.H = word & 0xFF00 >> 8 
         this.L = word & 0x00FF
+    }
+    setSP(word: number) {
+        this.SP = word
     }
 
     // reads next byte at PC and advances PC
@@ -183,8 +198,13 @@ export class CPU {
     // Opcode helper instructions
     // ====
 
-    // INC r8 [z0h-]
-    inc_r8 = (reg8: R8) => {
+    // INC r16 [----]
+    inc_reg16 = (reg16: R16) => {
+        this.setR16(reg16, uint16(this.getR16(reg16) + 1))
+    }
+
+    // INC reg8 [z0h-]
+    inc_reg8 = (reg8: R8) => {
         const val = this.getR8(reg8)
         const newVal = uint8(val + 1)
         this.setR8(reg8, newVal)
@@ -195,8 +215,8 @@ export class CPU {
         // c -
     }
 
-    // DEC r8 [z1h-]
-    dec_r8 = (reg8: R8) => {
+    // DEC reg8 [z1h-]
+    dec_reg8 = (reg8: R8) => {
         const val = this.getR8(reg8)
         const newVal = uint8(val - 1)
         this.setR8(reg8, newVal)
@@ -207,20 +227,9 @@ export class CPU {
         // c -
     }
 
-    // INC r16 [----]
-    inc_r16 = (reg16: R16) => {
-        this.setR16(reg16, this.getR16(reg16) + 1)
-    }
-
-    // LD r8 d8 [----]
-    ld_r8_d8 = (reg8: R8) => {
-        const d8 = this.mmu.rb(this.PC += 1)
-        this.setR8(reg8, d8)
-    }
-
     // RLCA [000c]
     // rotates A left one bit, with bit 7 moved to bit 0 and also stored in the carry.
-    rlc_A = () => {
+    rlca = () => {
         const carry = (this.A & 0x80) != 0
         if (carry) {
             // shift left, discard top bit
@@ -243,7 +252,7 @@ export class CPU {
 
     // RRCA [000c]
     // rotates A one bit right with bit 0 moved to bit 7 and also stored in the carry.
-    rrc_A = () => {
+    rrca = () => {
         const carry = (this.A & 0x01) != 0
         if (carry) {
             // shift right (discard bottom bit)
@@ -264,22 +273,12 @@ export class CPU {
         this.F.h = false
     }
 
-    // LD (a16) SP [----]
-    ld_a16_SP = () => {
-        const a16 = this.mmu.rw(this.PC += 1)
-        this.PC += 1
-        this.mmu.ww(a16, this.SP)
+    stop = () => {
+        this.stopped = true
     }
 
-    // LD SP d16 [----]
-    ld_SP_d16 = () => {
-        const d16 = this.mmu.rw(this.PC += 1)
-        this.PC += 1
-        this.SP = d16
-    }
-
-    // ADD HL r16 [-0hc]
-    add_HL_r16 = (reg16: R16) => {
+    // ADD HL reg16 [-0hc]
+    add_HL_reg16 = (reg16: R16) => {
         const val = this.getR16(reg16)
         const hl = this.getHL()
         const newVal = uint16(hl+ val)
@@ -292,21 +291,8 @@ export class CPU {
     }
 
     // DEC r16 [----]
-    dec_r16 = (reg16: R16) => {
+    dec_reg16 = (reg16: R16) => {
         this.setR16(reg16, uint16(this.getR16(reg16) - 1))
-    }
-
-    // LD r16 d16 [----]
-    ld_r16_d16 = (reg16: R16) => {
-        const d16 = this.mmu.rw(this.PC += 1)
-        this.PC += 1
-        this.setR16(reg16, d16)
-    }
-
-    // LD (r16) A [----]
-    // loads A into (r16)
-    ld_valr16_A = (reg16: R16) => {
-        this.mmu.wb(this.getR16(reg16), this.A)
     }
 
     // LD (HL+) A [----]
@@ -341,22 +327,6 @@ export class CPU {
         this.setHL(uint16(hl + 1))
     }
 
-    // LD (HL) d8 [----]
-    ld_valHL_d8 = () => {
-        const d8 = this.mmu.rb(this.PC += 1)
-        this.mmu.wb(this.getHL(), d8)
-    }
-
-    // LD r8 (HL) [----]
-    ld_r8_valHL = (reg8: R8) => {
-        this.setR8(reg8, this.mmu.rb(this.getHL()))
-    }
-
-    // LD (HL) r8 [----]
-    ld_valHL_r8 = (reg8: R8) => {
-        this.mmu.wb(this.getHL(), this.getR8(reg8))
-    }
-
     // INC (HL) [z0h-]
     // increments the byte at address HL
     inc_valHL = () => {
@@ -387,7 +357,7 @@ export class CPU {
     // RLA [000c]
     // rotates A one bit left with the carry moved to bit 0
     // and bit 7 moved to the carry.
-    rl_A = () => {
+    rla = () => {
         const oldCarry = this.F.c ? 1 : 0
         // if top bit is 1, move bit to carry
         this.F.c = (this.A & 0x80) !== 0 ? true : false
@@ -403,7 +373,7 @@ export class CPU {
     // RRA [000c]
     // rotates A one bit right with the carry moved to bit 7
     // and bit 0 moved to the carry.
-    rr_A = () => {
+    rra = () => {
         const oldCarry = this.F.c ? 1 : 0
         // if top bit is 1, move bit to carry
         this.F.c = (this.A & 0x01) !== 0 ? true : false
@@ -416,11 +386,16 @@ export class CPU {
         this.F.h = false
     }
 
-    // JR int8 [----]
-    // relative jump to PC +/- int8
-    jr_int8 = () => {
-        const i8 = int8(this.mmu.rb(this.PC += 1))
-        this.PC = uint16(this.PC + i8)
+    // JR r8 [----]
+    // relative jump to PC +/- r8 (int8)
+    jr = (r8: number) => {
+        this.PC = uint16(this.PC + r8)
+    }
+
+    // HALT [----]
+    // TODO there's apparently a HALT bug that I need to implement lol
+    halt = () => {
+        this.halted = true
     }
 
     // ADD A {r8, d8} [z0hc]

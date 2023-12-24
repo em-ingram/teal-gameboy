@@ -44,7 +44,7 @@ export class MMU {
     // (Interrupt register) 0xFFFF 
     upperMemory: Uint8Array
 
-    constructor(bootROM: Uint8Array, gameROM: Uint8Array) {
+    constructor(bootROM: Uint8Array = new Uint8Array(), gameROM: Uint8Array = new Uint8Array()) {
         this.bootROM = new Uint8Array(0x100)
         this.bootROM.set(bootROM)
         this.bootROMEnabled = true
