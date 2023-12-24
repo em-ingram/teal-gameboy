@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 
 import { setupCPU, setupMMU, dumpState, CPUState, MMUState } from './__test__/setup';
-import { Opcode } from './opcodes';
+import { Opcode } from './opcodeData';
 import { execute } from './execute';
 
 // TODO make this and put it in opcodes.ts

@@ -10,7 +10,7 @@ import {
     subHalfCarriesByte,
     addHalfCarriesWord
 } from './utils'
-import { prefixedOpcodeTable, unprefixedOpcodeTable } from './opcodes/opcodes'
+import { prefixedOpcodeTable, unprefixedOpcodeTable } from './opcodes/opcodeData'
 
 // 8 bit registers
 export enum R8 {
