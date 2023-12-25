@@ -555,8 +555,19 @@ export class CPU {
         this.F.c = !this.F.c
     }
     
-
-
-
+    // ADD SP r8 [00hc]
+    add_SP_r8 = () => {
+        console.log('DEBUG PC', this.PC.toString(16))
+        const r8 = int8(this.nextByte())
+        const sp = this.SP
+        console.log('DEBUG sp + r8', `0x${sp.toString(16)} + 0x${r8.toString(16)}`)
+        this.SP = uint16(sp + r8)
+        
+        this.F.z = false
+        this.F.n = false
+        // use lower byte for carry / half-carry. https://stackoverflow.com/questions/57958631/game-boy-half-carry-flag-and-16-bit-instructions-especially-opcode-0xe8
+        this.F.h = r8 > 0 ? addHalfCarriesByte(sp, r8) : subHalfCarriesByte(sp, r8)
+        this.F.c = r8 > 0 ? addCarriesByte(sp, r8) : uint8(sp) - r8 < 0
+    }
 }
 

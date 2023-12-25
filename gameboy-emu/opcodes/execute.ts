@@ -1,4 +1,4 @@
-// generated from generate_execute.js at 12/24/2023 8:22:12 PM 
+// generated from generate_execute.js at 12/25/2023 10:48:39 PM 
 import { CPU, R8, R16, RSTVector } from "../cpu"
 import { int8 } from "../utils"
 
@@ -745,7 +745,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 break
 
             case 0xe8: // ADD SP r8 [00HC]
-                
+                cpu.add_SP_r8()
                 break
             case 0xe9: // JP (HL)  [----]
                 

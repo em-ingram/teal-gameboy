@@ -480,12 +480,81 @@ describe("8 bit arith", () => {
     ])('CP d8 test %#: %d %o', testHelper)
 })
 
-// describe("16 bit arith", () => {
-//     // INC Reg16 [----]
-//     // DEC Reg16 [----]
-//     // ADD HL Reg16 [-0hc]
-//     // ADD SP r8 [00hc]
-// })
+describe("16 bit arith", () => {
+    // INC Reg16 [----]
+    test.each([
+        [Opcode.INC_BC,
+            {BC: 0x00FF, F: [0,1,1,1]},
+            {BC: 0x0100, F: [0,1,1,1]}
+        ],
+        [Opcode.INC_DE,
+            {DE: 0x0000, F: [0,1,1,1]},
+            {DE: 0x0001, F: [0,1,1,1]}
+        ],
+        [Opcode.INC_HL,
+            {HL: 0xFFFF, F: [0,1,1,1]},
+            {HL: 0x0000, F: [0,1,1,1]}
+        ],
+        [Opcode.INC_SP,
+            {SP: 0xFFFE, F: [0,1,1,1]},
+            {SP: 0xFFFF, F: [0,1,1,1]}
+        ],
+    ])('INC Reg16 test %#: %d %o', testHelper)
+
+    // DEC Reg16 [----]
+    test.each([
+        [Opcode.DEC_BC,
+            {BC: 0x0100, F: [0,1,1,1]},
+            {BC: 0x00FF, F: [0,1,1,1]}
+        ],
+        [Opcode.DEC_DE,
+            {DE: 0x0001, F: [0,1,1,1]},
+            {DE: 0x0000, F: [0,1,1,1]}
+        ],
+        [Opcode.DEC_HL,
+            {HL: 0x0000, F: [0,1,1,1]},
+            {HL: 0xFFFF, F: [0,1,1,1]}
+        ],
+        [Opcode.DEC_SP,
+            {SP: 0xFFFF, F: [0,1,1,1]},
+            {SP: 0xFFFE, F: [0,1,1,1]}
+        ],
+    ])('DEC Reg16 test %#: %d %o', testHelper)
+
+    // ADD HL Reg16 [-0hc]
+    test.each([
+        [Opcode.ADD_HL_BC,
+            {HL: 0x1000, BC: 0xF000, F: [1,1,1,1]},
+            {HL: 0x0000, BC: 0xF000, F: [1,0,0,1]}
+        ],
+        [Opcode.ADD_HL_DE,
+            {HL: 0x0001, DE: 0xFFFF, F: [1,1,1,1]},
+            {HL: 0x0000, DE: 0xFFFF, F: [1,0,0,0]}
+        ],
+        [Opcode.ADD_HL_HL,
+            {HL: 0x0800, F: [1,1,1,1]},
+            {HL: 0x1000, F: [1,0,1,0]}
+        ],
+        [Opcode.ADD_HL_SP,
+            {HL: 0x0800, SP: 0x0900, F: [1,1,1,1]},
+            {HL: 0x1100, SP: 0x0900, F: [1,0,1,0]}
+        ],
+    ])('ADD HL Reg16 test %#: %d %o', testHelper)
+
+    // ADD SP r8 [00hc]
+    test.each([
+        [Opcode.ADD_SP_r8,
+            {SP: 0x10FF, PC: 0xc000}, // H and C flags are complicated for this -- eg 0xFFFF + -0x01 = 0xFFFE sets H and C. (subtraction is done with 2's complement addition)
+            {SP: 0x1100, PC: 0xc001},
+            {"0xc001": 0x01} // 1
+        ],
+        [Opcode.ADD_SP_r8,
+            {SP: 0x1000, PC: 0xd000},
+            {SP: 0x0FFF, PC: 0xd001},
+            {"0xd001": 0x81} // -1
+        ],
+    ])('ADD SP r8 test %#: %d %o', testHelper)
+})
 
 // describe("16 bit loads / stack ops", () => {
 //     // LD Reg16 d16o

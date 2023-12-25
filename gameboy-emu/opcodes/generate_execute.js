@@ -61,9 +61,13 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         0x19, // ADD HL DE 
         0x29, // ADD HL HL
         0x39, // ADD HL SP
+
+        0xe8, // ADD SP r8
     ]
     if (arith16_instrs.includes(addr)) {
-        if (opc.mnemonic === 'ADD') {
+        if (addr === 0xe8) { // ADD SP r8
+            code += `cpu.add_SP_r8()`
+        } else if (opc.mnemonic === 'ADD') {
            code += `cpu.add_HL_reg16(R16.${opc.operand2})`
         } else { // INC, DEC
             code += `${fn}_reg16(R16.${opc.operand1})`
