@@ -143,15 +143,21 @@ export class CPU {
     }
 
     setBC(word: number) {
-        this.B = word & 0xFF00 >> 8 
+        this.B = (word & 0xFF00) >> 8 
         this.C = word & 0x00FF
     }
     setDE(word: number) {
-        this.D = word & 0xFF00 >> 8 
+        this.D = (word & 0xFF00) >> 8 
         this.E = word & 0x00FF
     }
     setHL(word: number) {
-        this.H = word & 0xFF00 >> 8 
+        // DEBUG
+        if (word === 0x1234) {
+            console.log('DEBUG word', word.toString(16))
+            console.log('DEBUG word & 0xFF00 >> 8', (word & 0xFF00 >> 8).toString(16))
+            console.log('DEBUG word & 0x00FF', (word & 0x00FF).toString(16))
+        }
+        this.H = (word & 0xFF00) >> 8 
         this.L = word & 0x00FF
     }
     setSP(word: number) {
@@ -429,7 +435,7 @@ export class CPU {
 
         this.F.z = this.A === 0
         this.F.n = true
-        this.F.n = subHalfCarriesByte(oldA, val)
+        this.F.h = subHalfCarriesByte(oldA, val)
         this.F.c = oldA - val < 0
     }
 
@@ -454,13 +460,13 @@ export class CPU {
         this.F.c = false
     }
 
-    // XOR A r8 [z010]
+    // XOR A r8 [z000]
     xor = (val: number) => {
-        this.A = this.A | val
+        this.A = this.A ^ val
 
         this.F.z = this.A === 0
         this.F.n = false
-        this.F.h = true
+        this.F.h = false
         this.F.c = false
     }
 
@@ -487,30 +493,35 @@ export class CPU {
     }
 
     // DAA [z-0c]
-    // A binary coded decimal instruction.
-    // Intended to be called after an addition or subtraction of binary coded decimal values.
-    // Adjusts the A register to contain the correct binary coded decimal result.
-    // For a better explanation, see https://ehaskins.com/2018-01-30%20Z80%20DAA/
+    // Ajusts A so that it's the correct result of Binary Coded Decimal math
+    // of the previous operation.
+    // BCD is just each nybble representing one digit from 0-9. 
+    // Example:
+    //   0x09 in BCD is 0b0000_1001 (0_9)
+    //   0x0F in BCD is 0b0001_0101 (1_5)
+    //   0x63 in BCD is 0b0110 0011 (9_9)
+    // If we're adding BCD numbers together, we need to adjust the result to make the
+    // result also in BCD.
+    // E.g. 0x09 + 0x01 gives us 0x0a (not a valid BCD number), but if we adjust the number
+    // by adding 6 to it (making up for the extra unused 6 numbers a,b,c,d,e,f) then we get
+    // 0x10, the correct BCD result.
+    // What about 0x90 + 0x11? We need to adjust the number by 60. And what about subtraction?
+    // It gets complicated -- read these detailed explanations.
+    // https://blog.ollien.com/posts/gb-daa/
+    // https://ehaskins.com/2018-01-30%20Z80%20DAA/
     daa = () => {
-        let u = 0;
-        // If last operation had half carry,
-        // or if last op was add and lower nyb of A needs to be adjusted (ie, is greater than 9)
-        if (this.F.h || (!this.F.n && (this.A & 0x0F) > 0x09)) {
-            u = 0x06
+        let correction = 0;
+
+        if (this.F.h || (!this.F.n && (this.A & 0xf) > 9)) {
+            correction |= 0x6;
         }
-        // If last op had carry,
-        // or if upper nyb of A needs to be adjusted (ie, is greater than 99)
+
         if (this.F.c || (!this.F.n && this.A > 0x99)) {
-            u |= 0x60
+            correction |= 0x60;
             this.F.c = true
         }
-        // Adjust A by subtracting u if last operation was a subtraction,
-        // otherwise adjust A by adding u.
-        if (this.F.n) {
-            this.A = uint8(this.A - u)
-        } else {
-            this.A = uint8(this.A + u)
-        }
+
+        this.A = uint8(this.A + (this.F.n ? -correction : correction));
 
         this.F.z = this.A === 0
         this.F.h = false

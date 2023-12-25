@@ -1,0 +1,1 @@
+better json ref? https://gbdev.io/gb-opcodes/Opcodes.json

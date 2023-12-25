@@ -2,18 +2,21 @@ import { CPU } from "../../cpu"
 import { MMU } from "../../mmu"
 
 // usage:
-//   0xfa: 0x0a // sets memory[0xfa] to 0x0a
-//   0xf0: [0x00, 0x00, 0x00] // sets memory[0xf0 .. 0xf2] to [0x00, 0x00, 0x00]
+//   0x00fa: 0x0a // sets memory[0xfa] to 0x0a
+//   0x00f0: [0x00, 0x00, 0x00] // sets memory[0xf0 .. 0xf2] to [0x00, 0x00, 0x00]
 export interface MMUState {
-    [addr: number]: number | [number]
+    [addr: string]: number | [number]
 }
 export const setupMMU = (state: MMUState): MMU => {
     const mmu = new MMU()
-    Object.entries(state).forEach( ([addr, value]) => {
+    Object.entries(state).forEach( ([addrString, value]) => {
+        const addr = parseInt(addrString)
         if (Array.isArray(value)) {
             value.forEach((byte, i) => {
-                mmu.wb(parseInt(addr, 16) + i, byte) 
+                mmu.wb(addr + i, byte) 
             })
+        } else {
+            mmu.wb(addr, value)
         }
     })
     return mmu
@@ -47,8 +50,8 @@ export const setupCPU = (state: CPUState, mmu: MMU = new MMU()): CPU => {
     }
 
     if (BC !== undefined) cpu.setBC(BC)
-    if (DE !== undefined) cpu.setBC(DE)
-    if (HL !== undefined) cpu.setBC(HL)
+    if (DE !== undefined) cpu.setDE(DE)
+    if (HL !== undefined) cpu.setHL(HL)
 
     if (SP !== undefined) cpu.SP = SP
     if (PC !== undefined) cpu.PC = PC
