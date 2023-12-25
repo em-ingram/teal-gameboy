@@ -1,7 +1,7 @@
 import { describe, test, expect } from 'vitest';
 
 import { setupCPU, setupMMU, dumpState, CPUState, MMUState } from './__test__/setup';
-import { Opcode } from './opcodeData';
+import { Opcode } from './opcodes';
 import { execute } from './execute';
 
 interface TestHelperInput {
