@@ -12,7 +12,7 @@ interface TestHelperInput {
     mmuIn?: MMUState
     mmuExpected?: MMUState
 }
-const testHelper = ({opc, cbPrefixed = false, cpuIn, cpuExpected, mmuIn = {}, mmuExpected ={}}: TestHelperInput) => {
+const testHelper = (opc: Opcode, cpuIn: CPUState, cpuExpected: CPUState, mmuIn: MMUState = {}, mmuExpected: MMUState ={}, cbPrefixed = false) => {
     const mmu = setupMMU(mmuIn)
     const cpu = setupCPU(cpuIn, mmu)
     execute(cpu, opc, cbPrefixed)
@@ -51,7 +51,7 @@ describe("8 bit arith", () => {
             {L: 0x01, F: [1, 1, 0, 0]}, 
             {L: 0x02, F: [0, 0, 0, 0]}, 
         ],
-    ])('INC Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('INC Reg8 test %#: %d %o', testHelper)
 
     // INC (HL) [z0h-]
     test.each([
@@ -67,7 +67,7 @@ describe("8 bit arith", () => {
             {"0xd123": 0xEF},
             {"0xd123": 0xF0}
         ],
-    ])('INC (HL) test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn, mmuExpected) => testHelper({opc, cpuIn, cpuExpected, mmuIn, mmuExpected}))
+    ])('INC (HL) test %#: %d %o', testHelper)
 
     // DEC R8 [z1h-]
     test.each([
@@ -87,7 +87,7 @@ describe("8 bit arith", () => {
             {H: 0x02, F: [1, 1, 0, 0]}, 
             {H: 0x01, F: [0, 1, 0, 0]}, 
         ],
-    ])('DEC Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('DEC Reg8 test %#: %d %o', testHelper)
 
     // DEC (HL) [z1h-]
     test.each([
@@ -109,7 +109,7 @@ describe("8 bit arith", () => {
             {"0xd123": 0x10},
             {"0xd123": 0x0F}
         ],
-    ])('DEC (HL) test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn, mmuExpected) => testHelper({opc, cpuIn, cpuExpected, mmuIn, mmuExpected}))
+    ])('DEC (HL) test %#: %d %o', testHelper)
 
     // DAA [z-0C]
     test.each([
@@ -122,7 +122,7 @@ describe("8 bit arith", () => {
             {A: 0x10, F: [0, 0, 0, 0]}, 
         ],
         // TODO could use some more test cases, I just don't understand DAA well enough to write them.
-    ])('DAA test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('DAA test %#: %d %o', testHelper)
 
     // CPL [-11-]
     test.each([
@@ -134,7 +134,7 @@ describe("8 bit arith", () => {
             {A: 0x00, F: [0, 0, 0, 1]}, 
             {A: 0xFF, F: [0, 1, 1, 1]}, 
         ],
-    ])('CPL test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('CPL test %#: %d %o', testHelper)
 
     // SCF [-001]
     test.each([
@@ -146,7 +146,7 @@ describe("8 bit arith", () => {
             {H: 0x1, B: 0x1, F: [0, 1, 1, 0]}, 
             {H: 0x1, B: 0x1, F: [0, 0, 0, 1]}, 
         ],
-    ])('SCF test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('SCF test %#: %d %o', testHelper)
 
     // CCF [-00C]
     test.each([
@@ -158,7 +158,7 @@ describe("8 bit arith", () => {
             {H: 0x1, B: 0x1, F: [0, 1, 0, 0]}, 
             {H: 0x1, B: 0x1, F: [0, 0, 0, 1]}, 
         ],
-    ])('CCF test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('CCF test %#: %d %o', testHelper)
 
     // ADD A Reg8 [z0hc]
     test.each([
@@ -178,7 +178,7 @@ describe("8 bit arith", () => {
             {A: 0x01, E: 0xFF, F: [1, 1, 0, 0]}, 
             {A: 0x00, E: 0xFF, F: [1, 0, 1, 1]}, 
         ],
-    ])('ADD A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('ADD A Reg8 test %#: %d %o', testHelper)
 
     // ADD A (HL) [z0hc]
     test.each([
@@ -187,7 +187,7 @@ describe("8 bit arith", () => {
             {A: 0x20, HL: 0xc123, F: [0, 0, 1, 0]}, 
             {"0xc123": 0x1F},
         ],
-    ])('ADD A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('ADD A Reg8 test %#: %d %o', testHelper)
 
     // ADC [z0hc]
     test.each([
@@ -207,7 +207,7 @@ describe("8 bit arith", () => {
             {A: 0x01, E: 0xFF, F: [1, 1, 0, 0]}, 
             {A: 0x00, E: 0xFF, F: [1, 0, 1, 1]}, 
         ],
-    ])('ADC A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('ADC A Reg8 test %#: %d %o', testHelper)
 
     // ADC A (HL) [z0hc]
     test.each([
@@ -216,7 +216,7 @@ describe("8 bit arith", () => {
             {A: 0x21, HL: 0xc123, F: [0, 0, 1, 0]}, 
             {"0xc123": 0x1F},
         ],
-    ])('ADC A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('ADC A Reg8 test %#: %d %o', testHelper)
 
     // SUB A Reg8 [z1hc]
     test.each([
@@ -244,7 +244,7 @@ describe("8 bit arith", () => {
             {A: 0x00, L: 0xFF, F: [1, 1, 0, 0]}, 
             {A: 0x01, L: 0xFF, F: [0, 1, 1, 1]}, 
         ],
-    ])('SUB A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('SUB A Reg8 test %#: %d %o', testHelper)
 
     // SUB A (HL) [z1hc]
     test.each([
@@ -253,7 +253,7 @@ describe("8 bit arith", () => {
             {A: 0x01, HL: 0xc123, F: [0, 1, 1, 0]}, 
             {"0xc123": 0x1F},
         ],
-    ])('SUB A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('SUB A Reg8 test %#: %d %o', testHelper)
 
     // SBC A Reg8 [z1hc]
     test.each([
@@ -281,7 +281,7 @@ describe("8 bit arith", () => {
             {A: 0x00, L: 0xFF, F: [1, 1, 0, 0]}, 
             {A: 0x01, L: 0xFF, F: [0, 1, 1, 1]}, 
         ],
-    ])('SBC A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('SBC A Reg8 test %#: %d %o', testHelper)
 
     // SBC A (HL) [z1hc]
     test.each([
@@ -290,7 +290,7 @@ describe("8 bit arith", () => {
             {A: 0x01, HL: 0xc123, F: [0, 1, 1, 0]}, 
             {"0xc123": 0x1F},
         ],
-    ])('SBC A (HL) test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('SBC A (HL) test %#: %d %o', testHelper)
 
     // AND A Reg8 [z010]
     test.each([
@@ -306,7 +306,7 @@ describe("8 bit arith", () => {
             {A: 0x11, L: 0x10, F: [1, 1, 0, 1]},
             {A: 0x10, L: 0x10, F: [0, 0, 1, 0]}
         ],
-    ])('AND A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('AND A Reg8 test %#: %d %o', testHelper)
 
     // AND A (HL) [z010]
     test.each([
@@ -315,7 +315,7 @@ describe("8 bit arith", () => {
             {A: 0x10, HL: 0xc123, F: [0, 0, 1, 0]}, 
             {"0xc123": 0x10},
         ],
-    ])('AND A (HL) test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('AND A (HL) test %#: %d %o', testHelper)
 
     // XOR A Reg8 [z000]
     test.each([
@@ -331,7 +331,7 @@ describe("8 bit arith", () => {
             {A: 0x11, L: 0x10, F: [1, 1, 0, 1]},
             {A: 0x01, L: 0x10, F: [0, 0, 0, 0]}
         ],
-    ])('XOR A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('XOR A Reg8 test %#: %d %o', testHelper)
 
     // XOR A (HL) [z000]
     test.each([
@@ -340,7 +340,7 @@ describe("8 bit arith", () => {
             {A: 0x01, HL: 0xc123, F: [0, 0, 0, 0]}, 
             {"0xc123": 0x10},
         ],
-    ])('XOR A (HL) test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('XOR A (HL) test %#: %d %o', testHelper)
 
     // OR A Reg8 [z000]
     test.each([
@@ -360,7 +360,7 @@ describe("8 bit arith", () => {
             {A: 0x00, C: 0x00, F: [1, 1, 0, 1]},
             {A: 0x00, C: 0x00, F: [1, 0, 0, 0]}
         ],
-    ])('OR A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('OR A Reg8 test %#: %d %o', testHelper)
 
     // OR A (HL) [z000]
     test.each([
@@ -369,7 +369,7 @@ describe("8 bit arith", () => {
             {A: 0x11, HL: 0xc123, F: [0, 0, 0, 0]}, 
             {"0xc123": 0x10},
         ],
-    ])('OR A (HL) test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('OR A (HL) test %#: %d %o', testHelper)
     
     // CP A Reg8 [z1hc]
     test.each([
@@ -389,7 +389,7 @@ describe("8 bit arith", () => {
             {A: 0x21, C: 0x12, F: [1, 1, 0, 1]},
             {A: 0x21, C: 0x12, F: [0, 1, 1, 0]}
         ],
-    ])('CP A Reg8 test %#: %d %o', (opc, cpuIn, cpuExpected) => testHelper({opc, cpuIn, cpuExpected}))
+    ])('CP A Reg8 test %#: %d %o', testHelper)
 
     // CP A (HL) [z1hc]
     test.each([
@@ -397,23 +397,69 @@ describe("8 bit arith", () => {
             {A: 0x01, HL: 0xc123, F: [1, 1, 0, 0]}, 
             {A: 0x01, HL: 0xc123, F: [0, 1, 0, 1]}, 
             {"0xc123": 0x10},
+            {"0xc123": 0x10}
         ],
-    ])('CP A (HL) test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('CP A (HL) test %#: %d %o', testHelper)
 
     // ADD A d8 [z0hc]
+    test.each([
+        [ Opcode.ADD_A_d8, 
+            {A: 0x11, PC: 0xc122, F: [1, 1, 0, 1]}, 
+            {A: 0x21, PC: 0xc123, F: [0, 0, 0, 0]}, 
+            {"0xc123": 0x10},
+            {"0xc123": 0x10}
+        ],
+    ])('ADD A d8 test %#: %d %o', testHelper)
+
     // ADC A d8 [z0hc]
+    test.each([
+        [ Opcode.ADC_A_d8, 
+            {A: 0x11, PC: 0xc122, F: [1, 1, 0, 1]}, 
+            {A: 0x22, PC: 0xc123, F: [0, 0, 0, 0]}, 
+            {"0xc123": 0x10},
+            {"0xc123": 0x10}
+        ],
+    ])('ADC A d8 test %#: %d %o', testHelper)
 
     // SUB A d8 [z1hc]
+    test.each([
+        [ Opcode.SUB_d8, 
+            {A: 0x11, PC: 0xc122, F: [1, 1, 0, 1]}, 
+            {A: 0x01, PC: 0xc123, F: [0, 1, 0, 0]}, 
+            {"0xc123": 0x10},
+            {"0xc123": 0x10}
+        ],
+    ])('SUB d8 test %#: %d %o', testHelper)
+
     // SBC A d8 [z1hc]
+    test.each([
+        [ Opcode.SBC_A_d8, 
+            {A: 0x11, PC: 0xc122, F: [1, 1, 0, 1]}, 
+            {A: 0x00, PC: 0xc123, F: [1, 1, 0, 0]}, 
+            {"0xc123": 0x10},
+            {"0xc123": 0x10}
+        ],
+    ])('SBC d8 test %#: %d %o', testHelper)
+
     // AND A d8 [z010]
+    test.each([
+        [ Opcode.AND_d8, 
+            {A: 0x11, PC: 0xc122, F: [1, 1, 0, 0]}, 
+            {A: 0x10, PC: 0xc123, F: [0, 0, 1, 0]}, 
+            {"0xc123": 0x10},
+            {"0xc123": 0x10}
+        ],
+    ])('XOR d8 test %#: %d %o', testHelper)
+
     // XOR A d8 [z000]
     test.each([
         [ Opcode.XOR_d8, 
             {A: 0x11, PC: 0xc122, F: [1, 1, 0, 0]}, 
             {A: 0x01, PC: 0xc123, F: [0, 0, 0, 0]}, 
             {"0xc123": 0x10},
+            {"0xc123": 0x10}
         ],
-    ])('XOR d8 test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('XOR d8 test %#: %d %o', testHelper)
 
     // OR A d8 [z000]
     test.each([
@@ -422,7 +468,7 @@ describe("8 bit arith", () => {
             {A: 0x11, PC: 0xC001, F: [0, 0, 0, 0]}, 
             {"0xC001": 0x10},
         ],
-    ])('OR A d8 test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
+    ])('OR A d8 test %#: %d %o', testHelper)
 
     // CP A d8 [z1hc]
     test.each([
@@ -431,8 +477,7 @@ describe("8 bit arith", () => {
             {A: 0x01, PC: 0xd002, F: [0, 1, 0, 1]}, 
             {"0xd002": 0x10},
         ],
-    ])('CP d8 test %#: %d %o', (opc, cpuIn, cpuExpected, mmuIn) => testHelper({opc, cpuIn, cpuExpected, mmuIn}))
-
+    ])('CP d8 test %#: %d %o', testHelper)
 })
 
 // describe("16 bit arith", () => {
