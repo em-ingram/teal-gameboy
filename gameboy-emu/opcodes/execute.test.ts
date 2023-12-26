@@ -4,14 +4,6 @@ import { setupCPU, setupMMU, dumpState, CPUState, MMUState } from './__test__/se
 import { Opcode } from './opcodes';
 import { execute } from './execute';
 
-interface TestHelperInput {
-    opc: Opcode
-    cbPrefixed?: boolean
-    cpuIn: CPUState
-    cpuExpected: CPUState
-    mmuIn?: MMUState
-    mmuExpected?: MMUState
-}
 const testHelper = (opc: Opcode, cpuIn: CPUState, cpuExpected: CPUState, mmuIn: MMUState = {}, mmuExpected: MMUState ={}, cbPrefixed = false) => {
     const mmu = setupMMU(mmuIn)
     const cpu = setupCPU(cpuIn, mmu)
@@ -27,8 +19,16 @@ const testHelper = (opc: Opcode, cpuIn: CPUState, cpuExpected: CPUState, mmuIn: 
     expect(cpuActual).toMatchObject(cpuExpected)
 
     // test MMU
-    Object.entries(mmuExpected).forEach(([addr, byte]) => {
-        expect(mmu.rb(parseInt(addr, 16))).toEqual(byte)
+    Object.entries(mmuExpected).forEach(([addrString, bytes], i) => {
+        const addr = parseInt(addrString, 16) 
+        if (Array.isArray(bytes)) {
+            bytes.forEach((byte, i) => {
+                expect(mmu.rb(addr + i)).toEqual(byte)
+            })
+        } else {
+            const byte = bytes
+            expect(mmu.rb(addr)).toEqual(byte)
+        }
     })
 }    
 
@@ -556,15 +556,53 @@ describe("16 bit arith", () => {
     ])('ADD SP r8 test %#: %d %o', testHelper)
 })
 
-// describe("16 bit loads / stack ops", () => {
-//     // LD Reg16 d16o
-//     // LD (a16) SP
-//     // POP Reg16 
-//     // POP AF [znhc]
-//     // PUSH Reg16
-//     // LD HL SP+r8 [00hc]
-//     // LD SP HL
-// })
+describe("16 bit loads / stack ops", () => {
+    // LD Reg16 d16
+    test.each([
+        [ Opcode.LD_BC_d16,
+            {BC: 0x0000, PC: 0xc000, F: [0,1,1,0]},
+            {BC: 0x0001, PC: 0xc002, F: [0,1,1,0]},
+            {0xc001: [0x00, 0x01]}
+        ],
+        [ Opcode.LD_SP_d16,
+            {SP: 0x0000, PC: 0xc000, F: [0,1,1,0]},
+            {SP: 0x1234, PC: 0xc002, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34]}
+        ]
+    ])('LD Reg16 d16 test %#: %d %o', testHelper)
+
+    // LD (a16) SP
+    test.each([
+        [ Opcode.LD_vala16_SP,
+            {SP: 0x1234, PC: 0xc000, F: [0,1,1,0]},
+            {SP: 0x1234, PC: 0xc002, F: [0,1,1,0]},
+            {"0xc001": [0xd0, 0x01], "0xd001": [0xFF, 0xFF]},
+            {"0xc001": [0xd0, 0x01], "0xd001": [0x12, 0x34]},
+        ],
+    ])('LD (a16) SP test %#: %d %o', testHelper)
+
+    // POP Reg16 
+    // POP AF [znhc]
+    // PUSH Reg16
+
+    // LD HL SP+r8 [00hc]
+    test.each([
+        // H and C flags are complicated for this -- eg 0xFFFF + -0x01 = 0xFFFE sets H and C. (subtraction is done with 2's complement addition)
+        // https://www.reddit.com/r/EmuDev/comments/knm196/gameboy_half_carry_flag_during_subtract_operation/
+        // TODO update H and C flags for subtraction operations too.
+        [ Opcode.LD_HL_SPplusr8,
+            {HL: 0x1F1F, SP: 0x10FF, PC: 0xc000, F: [0,1,1,0]},
+            {HL: 0x1100, SP: 0x10FF, PC: 0xc002, F: [0,0,1,0]},
+            {"0xc001": 0x01} // +1
+        ],
+        [ Opcode.LD_HL_SPplusr8,
+            {HL: 0x1F1F, SP: 0x00FF, PC: 0xc000, F: [0,1,1,0]},
+            {HL: 0x00FE, SP: 0x00FF, PC: 0xc002, F: [0,0,1,1]},
+            {"0xc001": 0x81} // -1
+        ]
+    ])('LD (a16) SP test %#: %d %o', testHelper)
+    // LD SP HL
+})
 
 // describe("jumps", () => {
 //     // JR r8

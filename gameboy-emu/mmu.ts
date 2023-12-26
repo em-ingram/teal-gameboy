@@ -60,7 +60,7 @@ export class MMU {
 
     rb(addr: number): number {
         if (addr >= 0xFFFF || addr < 0) {
-            console.warn(`Attempted to read invalid address ${addr}`);
+            console.warn(`Attempted to read invalid address 0x${addr.toString(16)}`);
             return -1;
         }
 
@@ -108,61 +108,15 @@ export class MMU {
     }
 
     rw(addr: number): number {
-        if (addr >= 0xFFFF || addr < 0) {
-            console.warn(`Attempted to read invalid address ${addr}`);
-            return -1;
-        }
-
-        if (this.bootROMEnabled && addr < 0x100) {
-            const hi = this.bootROM[addr]
-            const lo = this.bootROM[addr + 1]
-            return (hi << 8) | lo
-        }
-
-        var hi: number;
-        var lo: number
-        if (addr >= this.UPPER_MEMORY_OFFSET) {
-            hi = this.upperMemory[addr - this.UPPER_MEMORY_OFFSET]
-            lo = this.upperMemory[addr - this.UPPER_MEMORY_OFFSET + 1]
-        } else if (addr >= this.WORK_RAM_OFFSET) {
-            // TODO switchable banks
-            hi = this.workRAMBanks[addr - this.WORK_RAM_OFFSET]
-            lo = this.workRAMBanks[addr - this.WORK_RAM_OFFSET + 1]
-        } else if (addr >= this.CART_RAM_OFFSET) {
-            hi = this.cartRAM[addr - this.CART_RAM_OFFSET]
-            lo = this.cartRAM[addr - this.CART_RAM_OFFSET + 1]
-        } else if (addr >= this.VRAM_OFFSET) {
-            hi = this.VRAM[addr - this.VRAM_OFFSET]
-            lo = this.VRAM[addr - this.VRAM_OFFSET + 1]
-        } else {
-            hi = this.gameROMBanks[addr]
-            lo = this.gameROMBanks[addr + 1]
-        }
+        const hi = this.rb(addr)
+        const lo = this.rb(addr + 1)
         return (hi << 8) | lo;
     }
 
     ww(addr: number, val: number): void {
-        if (addr >= 0xFFFF || addr < 0) {
-            console.warn(`Attempted to read invalid address ${addr}`);
-        }
         const hi = val >> 8
         const lo = val // rely on behavior of TypedArrays to convert this to byte.  (Writes to a Uint8Array will keep the first byte of the input)
-        if (addr >= this.UPPER_MEMORY_OFFSET) {
-            this.upperMemory[addr - this.UPPER_MEMORY_OFFSET] = hi
-            this.upperMemory[addr - this.UPPER_MEMORY_OFFSET + 1] = lo
-        } else if (addr >= this.WORK_RAM_OFFSET) {
-            // TODO switchable banks
-            this.workRAMBanks[addr - this.WORK_RAM_OFFSET] = hi
-            this.workRAMBanks[addr - this.WORK_RAM_OFFSET + 1] = lo
-        } else if (addr >= this.CART_RAM_OFFSET) {
-            this.cartRAM[addr - this.CART_RAM_OFFSET] = hi
-            this.cartRAM[addr - this.CART_RAM_OFFSET + 1] = lo
-        } else if (addr >= this.VRAM_OFFSET) {
-            this.VRAM[addr - this.VRAM_OFFSET] = hi
-            this.VRAM[addr - this.VRAM_OFFSET + 1] = lo
-        } else {
-            // Can't write to ROM
-            console.warn(`Attempted to write to read-only address ${addr}`);
-        }
+        this.wb(addr, hi)
+        this.wb(addr + 1, lo)
     }
 }

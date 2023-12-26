@@ -151,12 +151,6 @@ export class CPU {
         this.E = word & 0x00FF
     }
     setHL(word: number) {
-        // DEBUG
-        if (word === 0x1234) {
-            console.log('DEBUG word', word.toString(16))
-            console.log('DEBUG word & 0xFF00 >> 8', (word & 0xFF00 >> 8).toString(16))
-            console.log('DEBUG word & 0x00FF', (word & 0x00FF).toString(16))
-        }
         this.H = (word & 0xFF00) >> 8 
         this.L = word & 0x00FF
     }
@@ -557,10 +551,8 @@ export class CPU {
     
     // ADD SP r8 [00hc]
     add_SP_r8 = () => {
-        console.log('DEBUG PC', this.PC.toString(16))
         const r8 = int8(this.nextByte())
         const sp = this.SP
-        console.log('DEBUG sp + r8', `0x${sp.toString(16)} + 0x${r8.toString(16)}`)
         this.SP = uint16(sp + r8)
         
         this.F.z = false

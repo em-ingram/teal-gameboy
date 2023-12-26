@@ -8,8 +8,8 @@ const formatOperand = (operand) => {
         operand = `val${operand.slice(1, -1)}`
     }
     // replace "HL+" with "HLinc"
-    operand = operand.replace("-", "dec")
-    operand = operand.replace("+", "inc")
+    operand = operand.replace("-", "minus")
+    operand = operand.replace("+", "plus")
     return operand
 }
 

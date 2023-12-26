@@ -5,7 +5,7 @@ import { MMU } from "../../mmu"
 //   0x00fa: 0x0a // sets memory[0xfa] to 0x0a
 //   0x00f0: [0x00, 0x00, 0x00] // sets memory[0xf0 .. 0xf2] to [0x00, 0x00, 0x00]
 export interface MMUState {
-    [addr: string]: number | [number]
+    [addr: number]: number | number[]
 }
 export const setupMMU = (state: MMUState): MMU => {
     const mmu = new MMU()
