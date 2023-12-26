@@ -49,6 +49,7 @@ export class CPU {
         h: boolean // half carry flag
         c: boolean // carry flag
         toUint8: () => number
+        fromUint8: (uint8: number) => void
     } = {
         z: false,
         n: false,
@@ -61,6 +62,12 @@ export class CPU {
             if (this.h) f |= 0x20 // bit 5
             if (this.c) f |= 0x10 // bit 4
             return f
+        },
+        fromUint8: function(byte) {
+            this.z = byte & 0x80 ? true : false
+            this.n = byte & 0x40 ? true : false
+            this.h = byte & 0x20 ? true : false
+            this.c = byte & 0x10 ? true : false
         }
     }
 
@@ -117,7 +124,9 @@ export class CPU {
 
     setR16(reg16: R16, val: number) {
         switch(reg16) {
-            case R16.AF: console.warn("set AF not implemented")
+            case R16.AF: 
+                this.A = (val & 0xFF00) >> 8
+                this.F.fromUint8(val & 0xFF)
             case R16.BC: this.setBC(val); return
             case R16.DE: this.setDE(val); return
             case R16.HL: this.setHL(val); return
@@ -297,7 +306,7 @@ export class CPU {
 
     // LD (HL+) A [----]
     // sets (HL) = A, then increments HL
-    ld_valHLinc_A = () => {
+    ld_valHLplus_A = () => {
         const hl = this.getHL()
         this.mmu.wb(hl, this.A)
         this.setHL(uint16(hl + 1))
@@ -305,7 +314,7 @@ export class CPU {
 
     // LD A (HL-) [---]
     // sets A = (HL), then decrements HL
-    ld_A_valHLdec = () => {
+    ld_A_valHLminus = () => {
         const hl = this.getHL()
         this.A = this.mmu.rb(hl)
         this.setHL(uint16(hl - 1))
@@ -313,7 +322,7 @@ export class CPU {
 
     // LD (HL-) A [----]
     // sets (HL) = A, then decrements HL
-    ld_valHLdec_A = () => {
+    ld_valHLminus_A = () => {
         const hl = this.getHL()
         this.mmu.wb(hl, this.A)
         this.setHL(uint16(hl - 1))
@@ -321,10 +330,22 @@ export class CPU {
 
     // LD A (HL+) [---]
     // sets A = (HL), then increments HL
-    ld_A_valHLinc = () => {
+    ld_A_valHLplus = () => {
         const hl = this.getHL()
         this.A = this.mmu.rb(hl)
         this.setHL(uint16(hl + 1))
+    }
+
+    // LD HL SP+r8 [00hc]
+    ld_HL_SPplusr8 = () => {
+        const r8 = int8(this.nextByte())
+        const sp = this.getSP()
+        const hl = this.getHL()
+
+        this.F.z = 0
+        this.F.n = 0
+        this.F.h = r8 > 0 ? addHalfCarriesByte(sp, r8) : subHalfCarriesByte(sp, r8)
+        this.F.c = r8 > 0 ? addCarriesByte(sp, r8) : subHalfCarriesByte()
     }
 
     // INC (HL) [z0h-]
@@ -561,5 +582,19 @@ export class CPU {
         this.F.h = r8 > 0 ? addHalfCarriesByte(sp, r8) : subHalfCarriesByte(sp, r8)
         this.F.c = r8 > 0 ? addCarriesByte(sp, r8) : uint8(sp) - r8 < 0
     }
+
+    // PUSH Reg16
+    push = (reg16: R16) => {
+        this.mmu.ww(this.SP-=2, this.getR16(reg16))
+    }
+
+    // POP Reg16
+    pop = (reg16: R16) => {
+        this.setR16(reg16, this.mmu.rw(this.SP+=2))
+    }
+
+    // POP AF [znhc]
+    pop_AF = () => this.pop(R16.AF)
+
 }
 

@@ -582,8 +582,45 @@ describe("16 bit loads / stack ops", () => {
     ])('LD (a16) SP test %#: %d %o', testHelper)
 
     // POP Reg16 
-    // POP AF [znhc]
+    test.each([
+        [ Opcode.POP_BC,
+            {BC: 0x1234, SP: 0xFFFC, F: [0,1,1,0]},
+            {BC: 0xabcd, SP: 0xFFFE, F: [0,1,1,0]},
+            {"0xFFFC": [0xab, 0xcd]}
+        ],
+        [ Opcode.POP_DE,
+            {DE: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
+            {DE: 0xabcd, SP: 0xFFFC, F: [0,1,1,0]},
+            {"0xFFFA": [0xab, 0xcd]}
+        ],
+        [ Opcode.POP_AF,
+            {AF: 0x1280, SP: 0xFFFA, F: [1,0,0,0]},
+            {AF: 0x2210, SP: 0xFFFC, F: [0,0,0,1]}, // note that bottom nyb of F is dropped, and flags are set to top nyb
+            {"0xFFFA": [0x22, 0x11]}
+        ],
+    ])('POP Reg16 test %#: %d %o', testHelper)
+
     // PUSH Reg16
+    test.each([
+        [ Opcode.PUSH_BC,
+            {BC: 0x1234, SP: 0xFFFE, F: [0,1,1,0]},
+            {BC: 0x1234, SP: 0xFFFC, F: [0,1,1,0]},
+            {"0xFFFC": [0x00, 0x00]},
+            {"0xFFFC": [0x12, 0x34]}
+        ],
+        [ Opcode.PUSH_DE,
+            {DE: 0x1234, SP: 0xFFFC, F: [0,1,1,0]},
+            {DE: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
+            {"0xFFFA": [0x00, 0x00]},
+            {"0xFFFA": [0x12, 0x34]},
+        ],
+        [ Opcode.PUSH_AF,
+            {AF: 0x1280, SP: 0xFFFC, F: [1,0,0,0]},
+            {AF: 0x1280, SP: 0xFFFA, F: [1,0,0,0]}, 
+            {"0xFFFA": [0x00, 0x00]},
+            {"0xFFFA": [0x12, 0x80]},
+        ],
+    ])('POP Reg16 test %#: %d %o', testHelper)
 
     // LD HL SP+r8 [00hc]
     test.each([
@@ -600,8 +637,15 @@ describe("16 bit loads / stack ops", () => {
             {HL: 0x00FE, SP: 0x00FF, PC: 0xc002, F: [0,0,1,1]},
             {"0xc001": 0x81} // -1
         ]
-    ])('LD (a16) SP test %#: %d %o', testHelper)
+    ])('LD HL SP+r8 test %#: %d %o', testHelper)
+
     // LD SP HL
+    test.each([
+        [ Opcode.LD_SP_HL,
+            {SP: 0x1234, HL: 0x2222, F: [0,1,1,0]},
+            {SP: 0x2222, HL: 0x2222, F: [0,1,1,0]},
+        ],
+    ])('LD SP HL test %#: %d %o', testHelper)
 })
 
 // describe("jumps", () => {
