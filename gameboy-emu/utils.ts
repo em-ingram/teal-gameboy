@@ -2,6 +2,10 @@ export const addCarriesByte = (a: number, b: number): boolean => {
     return (a + b) > 0xFF
 }
 
+export const subCarriesByte = (a: number, b: number): boolean => {
+    return b > a
+}
+
 // Checks for a carry in the top byte
 export const addCarriesWord = (a: number, b: number): boolean => {
     return ((a & 0xFF00) + (b & 0xFF00)) > 0xFF00

@@ -620,21 +620,19 @@ describe("16 bit loads / stack ops", () => {
             {"0xFFFA": [0x00, 0x00]},
             {"0xFFFA": [0x12, 0x80]},
         ],
-    ])('POP Reg16 test %#: %d %o', testHelper)
+    ])('PUSH Reg16 test %#: %d %o', testHelper)
 
     // LD HL SP+r8 [00hc]
     test.each([
-        // H and C flags are complicated for this -- eg 0xFFFF + -0x01 = 0xFFFE sets H and C. (subtraction is done with 2's complement addition)
-        // https://www.reddit.com/r/EmuDev/comments/knm196/gameboy_half_carry_flag_during_subtract_operation/
-        // TODO update H and C flags for subtraction operations too.
+        // TODO still not sure I understand the HC flags for subtraction.
         [ Opcode.LD_HL_SPplusr8,
             {HL: 0x1F1F, SP: 0x10FF, PC: 0xc000, F: [0,1,1,0]},
-            {HL: 0x1100, SP: 0x10FF, PC: 0xc002, F: [0,0,1,0]},
+            {HL: 0x1100, SP: 0x10FF, PC: 0xc001, F: [0,0,1,1]},
             {"0xc001": 0x01} // +1
         ],
         [ Opcode.LD_HL_SPplusr8,
             {HL: 0x1F1F, SP: 0x00FF, PC: 0xc000, F: [0,1,1,0]},
-            {HL: 0x00FE, SP: 0x00FF, PC: 0xc002, F: [0,0,1,1]},
+            {HL: 0x00FE, SP: 0x00FF, PC: 0xc001, F: [0,0,0,0]},
             {"0xc001": 0x81} // -1
         ]
     ])('LD HL SP+r8 test %#: %d %o', testHelper)

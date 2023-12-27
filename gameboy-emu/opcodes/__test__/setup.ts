@@ -28,12 +28,13 @@ export interface CPUState {
     E?: number, H?: number, L?: number
     F?: number[],
 
+    AF?: number,
     BC?: number, DE?: number, HL?: number
     SP?: number, PC?: number
 }
 export const setupCPU = (state: CPUState, mmu: MMU = new MMU()): CPU => {
     const cpu = new CPU(mmu)
-    const {A, B, C, D, E, H, L, F, BC, DE, HL, SP, PC} = state
+    const {A, B, C, D, E, H, L, F, AF, BC, DE, HL, SP, PC} = state
     if (A !== undefined) cpu.A = A
     if (B !== undefined) cpu.B = B
     if (C !== undefined) cpu.C = C
@@ -49,6 +50,7 @@ export const setupCPU = (state: CPUState, mmu: MMU = new MMU()): CPU => {
         cpu.F.c = !!F[3]
     }
 
+    if (AF !== undefined) cpu.setAF(AF)
     if (BC !== undefined) cpu.setBC(BC)
     if (DE !== undefined) cpu.setDE(DE)
     if (HL !== undefined) cpu.setHL(HL)
@@ -69,6 +71,7 @@ export const dumpState = (cpu: CPU): Required<CPUState> => {
             cpu.F.h ? 1 : 0,
             cpu.F.c ? 1 : 0,
         ],
+        AF: cpu.getAF(),
         BC: cpu.getBC(),
         DE: cpu.getDE(),
         HL: cpu.getHL()

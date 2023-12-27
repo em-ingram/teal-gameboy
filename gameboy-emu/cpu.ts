@@ -5,9 +5,10 @@ import {
     uint16,
     int8,
     addCarriesByte,
-    addCarriesWord,
+    subCarriesByte,
     addHalfCarriesByte,
     subHalfCarriesByte,
+    addCarriesWord,
     addHalfCarriesWord
 } from './utils'
 import { prefixedOpcodeTable, unprefixedOpcodeTable } from './opcodes/opcodeData'
@@ -49,7 +50,7 @@ export class CPU {
         h: boolean // half carry flag
         c: boolean // carry flag
         toUint8: () => number
-        fromUint8: (uint8: number) => void
+        setFromUint8: (uint8: number) => void
     } = {
         z: false,
         n: false,
@@ -63,7 +64,7 @@ export class CPU {
             if (this.c) f |= 0x10 // bit 4
             return f
         },
-        fromUint8: function(byte) {
+        setFromUint8: function(byte) {
             this.z = byte & 0x80 ? true : false
             this.n = byte & 0x40 ? true : false
             this.h = byte & 0x20 ? true : false
@@ -124,9 +125,7 @@ export class CPU {
 
     setR16(reg16: R16, val: number) {
         switch(reg16) {
-            case R16.AF: 
-                this.A = (val & 0xFF00) >> 8
-                this.F.fromUint8(val & 0xFF)
+            case R16.AF: this.setAF(val); return
             case R16.BC: this.setBC(val); return
             case R16.DE: this.setDE(val); return
             case R16.HL: this.setHL(val); return
@@ -137,7 +136,6 @@ export class CPU {
     getAF(): number {
         return (this.A << 8) | this.F.toUint8()
     }
-
     getBC(): number {
         return (this.B << 8) | this.C
     }
@@ -151,6 +149,10 @@ export class CPU {
         return this.SP
     }
 
+    setAF(word: number) {
+        this.A = (word & 0xFF00) >> 8
+        this.F.setFromUint8(word)
+    }
     setBC(word: number) {
         this.B = (word & 0xFF00) >> 8 
         this.C = word & 0x00FF
@@ -338,14 +340,16 @@ export class CPU {
 
     // LD HL SP+r8 [00hc]
     ld_HL_SPplusr8 = () => {
+        console.debug('DEBUG', this.PC.toString(16))
         const r8 = int8(this.nextByte())
+        console.debug('DEBUG', this.PC.toString(16))
         const sp = this.getSP()
-        const hl = this.getHL()
+        this.setHL(uint16(sp + r8))
 
-        this.F.z = 0
-        this.F.n = 0
+        this.F.z = false
+        this.F.n = false
         this.F.h = r8 > 0 ? addHalfCarriesByte(sp, r8) : subHalfCarriesByte(sp, r8)
-        this.F.c = r8 > 0 ? addCarriesByte(sp, r8) : subHalfCarriesByte()
+        this.F.c = r8 > 0 ? addCarriesByte(sp, r8) : subCarriesByte(sp, r8)
     }
 
     // INC (HL) [z0h-]
@@ -590,11 +594,15 @@ export class CPU {
 
     // POP Reg16
     pop = (reg16: R16) => {
-        this.setR16(reg16, this.mmu.rw(this.SP+=2))
+        this.setR16(reg16, this.mmu.rw(this.SP))
+        this.SP += 2
     }
 
     // POP AF [znhc]
     pop_AF = () => this.pop(R16.AF)
+
+    // PUSH AF 
+    push_AF = () => this.push(R16.AF)
 
 }
 

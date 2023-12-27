@@ -37,9 +37,9 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         if (addr === 0x08) { // LD (a16) SP
             code += `cpu.mmu.ww(cpu.nextWord(), cpu.SP)`
         } else if (addr === 0xf8) { // LD HL SP+r8
-            code += `${fn}_HL_SPplusInt8()`
+            code += `${fn}_HL_SPplusr8()`
         } else if (addr === 0xf9) { // LD SP HL
-            code += `cpu.SP = cpu.HL`
+            code += `cpu.SP = cpu.getHL()`
         } else { // LD reg16 d16
             code += `cpu.set${opc.operand1}(cpu.nextWord())`
         }
