@@ -20,7 +20,7 @@ const testHelper = (opc: Opcode, cpuIn: CPUState, cpuExpected: CPUState, mmuIn: 
 
     // test MMU
     Object.entries(mmuExpected).forEach(([addrString, bytes], i) => {
-        const addr = parseInt(addrString, 16) 
+        const addr = parseInt(addrString) 
         if (Array.isArray(bytes)) {
             bytes.forEach((byte, i) => {
                 expect(mmu.rb(addr + i)).toEqual(byte)
@@ -646,14 +646,239 @@ describe("16 bit loads / stack ops", () => {
     ])('LD SP HL test %#: %d %o', testHelper)
 })
 
-// describe("jumps", () => {
-//     // JR r8
-//     // JP a16
-//     // CALL a16
-//     // RST
-//     // RET
-//     // RETI
-// })
+describe("jumps", () => {
+    // JR r8
+    test.each([
+        [ Opcode.JR_r8,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0xc005, F: [0,1,1,0]},
+            {0xc001: 0x04} // +4
+        ],
+        [ Opcode.JR_r8,
+            {PC: 0xd000, F: [0,1,1,0]},
+            {PC: 0xcff2, F: [0,1,1,0]}, // 0xd001 - 0xF
+            {0xd001: 0x8F} // -15
+        ],
+        [ Opcode.JR_NC_r8, // c = 0, yes jump
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0xc005, F: [0,1,1,0]},
+            {0xc001: 0x04} // +4
+        ],
+        [ Opcode.JR_NC_r8, // c = 1, no jump
+            {PC: 0xc000, F: [0,1,1,1]},
+            {PC: 0xc001, F: [0,1,1,1]},
+            {0xc001: 0x04} // +4
+        ],
+        [ Opcode.JR_C_r8, // c = 0, no jump
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0xc001, F: [0,1,1,0]},
+            {0xc001: 0x04} // +4
+        ],
+        [ Opcode.JR_C_r8, // c = 1, yes jump
+            {PC: 0xc000, F: [0,1,1,1]},
+            {PC: 0xc005, F: [0,1,1,1]},
+            {0xc001: 0x04} // +4
+        ],
+        [ Opcode.JR_NZ_r8, // z = 0, yes jump
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0xc005, F: [0,1,1,0]},
+            {0xc001: 0x04} // +4
+        ],
+        [ Opcode.JR_NZ_r8, // z = 1, no jump
+            {PC: 0xc000, F: [1,1,1,1]},
+            {PC: 0xc001, F: [1,1,1,1]},
+            {0xc001: 0x04} // +4
+        ],
+        [ Opcode.JR_Z_r8, // z = 0, no jump
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0xc001, F: [0,1,1,0]},
+            {0xc001: 0x04} // +4
+        ],
+        [ Opcode.JR_Z_r8, // z = 1, yes jump
+            {PC: 0xc000, F: [1,1,1,1]},
+            {PC: 0xc005, F: [1,1,1,1]},
+            {0xc001: 0x04} // +4
+        ],
+    ])('JR r8 test %#: %d %o', testHelper)
+
+    // JP a16
+    test.each([
+        [ Opcode.JP_a16,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x1234, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34]} 
+        ],
+        [ Opcode.JP_NC_a16, // c = 0, yes jump
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x5678, F: [0,1,1,0]},
+            {0xc001: [0x56, 0x78]} 
+        ],
+        [ Opcode.JP_NC_a16, // c = 1, no jump
+            {PC: 0xc000, F: [0,1,1,1]},
+            {PC: 0xc002, F: [0,1,1,1]},
+            {0xc001: [0xba, 0xbe]} 
+        ],
+        [ Opcode.JP_C_a16, // c = 0, no jump
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0xc002, F: [0,1,1,0]},
+            {0xc001: [0xb0, 0x0b]} 
+        ],
+        [ Opcode.JP_C_a16, // c = 1, yes jump
+            {PC: 0xc000, F: [0,1,1,1]},
+            {PC: 0xb00b, F: [0,1,1,1]},
+            {0xc001: [0xb0, 0x0b]} 
+        ],
+        [ Opcode.JP_NZ_a16, // z = 0, yes jump
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0xb00b, F: [0,1,1,0]},
+            {0xc001: [0xb0, 0x0b]}
+        ],
+        [ Opcode.JP_NZ_a16, // z = 1, no jump
+            {PC: 0xc000, F: [1,1,1,1]},
+            {PC: 0xc002, F: [1,1,1,1]},
+            {0xc001: [0xb0, 0x0b]} 
+        ],
+        [ Opcode.JP_Z_a16, // z = 0, no jump
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0xc002, F: [0,1,1,0]},
+            {0xc001: [0xb0, 0x0b]} 
+        ],
+        [ Opcode.JP_Z_a16, // z = 1, yes jump
+            {PC: 0xc000, F: [1,1,1,1]},
+            {PC: 0xb00b, F: [1,1,1,1]},
+            {0xc001: [0xb0, 0x0b]} 
+        ],
+    ])('JP a16 test %#: %d %o', testHelper)
+
+    // JP (HL)
+    test.each([
+        [ Opcode.JP_valHL,
+            {PC: 0xc000, HL: 0xd00f, F: [0,1,1,0]},
+            {PC: 0xb00b, HL: 0xd00f, F: [0,1,1,0]},
+            {0xd00f: [0xb0, 0x0b]}
+        ],
+    ])('JP (HL) test %#: %d %o', testHelper)
+
+
+    // CALL a16
+    test.each([
+        [ Opcode.CALL_a16,
+            {PC: 0xc000, SP: 0xFFFE, F: [0,1,1,0]},
+            {PC: 0x1234, SP: 0xFFFC, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFC: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFC: [0xc0, 0x02]} 
+        ],
+        [ Opcode.CALL_NC_a16, // c = 0, yes jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+        ],
+        [ Opcode.CALL_NC_a16, // c = 1, no jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
+            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
+        ],
+        [ Opcode.CALL_C_a16, // c = 1, yes jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
+            {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+        ],
+        [ Opcode.CALL_C_a16, // c = 0, no jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
+        ],
+        [ Opcode.CALL_NZ_a16, // z = 0, yes jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+        ],
+        [ Opcode.CALL_NZ_a16, // z = 1, no jump
+            {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,1]},
+            {PC: 0xc002, SP: 0xFFFC, F: [1,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
+        ],
+        [ Opcode.CALL_Z_a16, // z = 1, yes jump
+            {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,1]},
+            {PC: 0x1234, SP: 0xFFFA, F: [1,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+        ],
+        [ Opcode.CALL_Z_a16, // z = 0, no jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
+        ],
+    ])('CALL a16 test %#: %d %o', testHelper)
+
+    // RST
+
+    // RET
+    test.each([
+        [ Opcode.CALL_a16,
+            {PC: 0xc000, SP: 0xFFFE, F: [0,1,1,0]},
+            {PC: 0x1234, SP: 0xFFFC, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFC: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFC: [0xc0, 0x02]} 
+        ],
+        [ Opcode.CALL_NC_a16, // c = 0, yes jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+        ],
+        [ Opcode.CALL_NC_a16, // c = 1, no jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
+            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
+        ],
+        [ Opcode.CALL_C_a16, // c = 1, yes jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
+            {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+        ],
+        [ Opcode.CALL_C_a16, // c = 0, no jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
+        ],
+        [ Opcode.CALL_NZ_a16, // z = 0, yes jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+        ],
+        [ Opcode.CALL_NZ_a16, // z = 1, no jump
+            {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,1]},
+            {PC: 0xc002, SP: 0xFFFC, F: [1,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
+        ],
+        [ Opcode.CALL_Z_a16, // z = 1, yes jump
+            {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,1]},
+            {PC: 0x1234, SP: 0xFFFA, F: [1,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+        ],
+        [ Opcode.CALL_Z_a16, // z = 0, no jump
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
+        ],
+    ])('CALL a16 test %#: %d %o', testHelper)
+    // RETI
+})
 
 // describe("bit shifts", () => {
 //     // RLCA [000c]

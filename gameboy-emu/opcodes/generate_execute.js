@@ -249,26 +249,28 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         0xcc, // CALL_Z
         0xdc, // CALL_C
         0xcd, // CALL
+
+        0xe9, // JP (HL)
     ]
     if (jump_instrs.includes(addr)) {
         switch(opc.operand1) {
+            case '(HL)':
+                code += `${fn}_valHL()`
+                break
             case 'NZ':
-                code += `if (!cpu.F.z) `
+                code += `${fn}_nz()`
                 break
             case 'NC':
-                code += `if (!cpu.F.c) `
+                code += `${fn}_nc()`
                 break
             case 'Z':
-                code += `if (cpu.F.z) `
+                code += `${fn}_z()`
                 break
             case 'C':
-                code += `if (cpu.F.c) `
+                code += `${fn}_c()`
                 break
-        }
-        if (opc.mnemonic === "JR") {
-            code += `${fn}(int8(cpu.nextByte()))`
-        } else {
-            code += `${fn}(cpu.nextWord())`
+            default:
+                code += `${fn}()`
         }
     }
 

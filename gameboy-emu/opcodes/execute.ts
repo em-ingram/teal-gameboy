@@ -1,4 +1,4 @@
-// generated from generate_execute.js at 12/27/2023 9:56:43 PM 
+// generated from generate_execute.js at 12/27/2023 11:50:59 PM 
 import { CPU, R8, R16, RSTVector } from "../cpu"
 import { int8 } from "../utils"
 
@@ -84,7 +84,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 break
 
             case 0x18: // JR r8  [----]
-                cpu.jr(int8(cpu.nextByte()))
+                cpu.jr()
                 break
             case 0x19: // ADD HL DE [-0HC]
                 cpu.add_HL_reg16(R16.DE)
@@ -111,7 +111,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
 
 
             case 0x20: // JR NZ r8 [----]
-                if (!cpu.F.z) cpu.jr(int8(cpu.nextByte()))
+                cpu.jr_nz()
                 break
             case 0x21: // LD HL d16 [----]
                 cpu.setHL(cpu.nextWord())
@@ -136,7 +136,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 break
 
             case 0x28: // JR Z r8 [----]
-                if (cpu.F.z) cpu.jr(int8(cpu.nextByte()))
+                cpu.jr_z()
                 break
             case 0x29: // ADD HL HL [-0HC]
                 cpu.add_HL_reg16(R16.HL)
@@ -163,7 +163,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
 
 
             case 0x30: // JR NC r8 [----]
-                if (!cpu.F.c) cpu.jr(int8(cpu.nextByte()))
+                cpu.jr_nc()
                 break
             case 0x31: // LD SP d16 [----]
                 cpu.setSP(cpu.nextWord())
@@ -188,7 +188,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 break
 
             case 0x38: // JR C r8 [----]
-                if (cpu.F.c) cpu.jr(int8(cpu.nextByte()))
+                cpu.jr_c()
                 break
             case 0x39: // ADD HL SP [-0HC]
                 cpu.add_HL_reg16(R16.SP)
@@ -637,13 +637,13 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.pop(R16.BC)
                 break
             case 0xc2: // JP NZ a16 [----]
-                if (!cpu.F.z) cpu.jp(cpu.nextWord())
+                cpu.jp_nz()
                 break
             case 0xc3: // JP a16  [----]
-                cpu.jp(cpu.nextWord())
+                cpu.jp()
                 break
             case 0xc4: // CALL NZ a16 [----]
-                if (!cpu.F.z) cpu.call(cpu.nextWord())
+                cpu.call_nz()
                 break
             case 0xc5: // PUSH BC  [----]
                 cpu.push(R16.BC)
@@ -662,16 +662,16 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.ret()
                 break
             case 0xca: // JP Z a16 [----]
-                if (cpu.F.z) cpu.jp(cpu.nextWord())
+                cpu.jp_z()
                 break
             case 0xcb: // PREFIX CB  [----]
                 
                 break
             case 0xcc: // CALL Z a16 [----]
-                if (cpu.F.z) cpu.call(cpu.nextWord())
+                cpu.call_z()
                 break
             case 0xcd: // CALL a16  [----]
-                cpu.call(cpu.nextWord())
+                cpu.call()
                 break
             case 0xce: // ADC A d8 [Z0HC]
                 cpu.adc(cpu.nextByte())
@@ -689,10 +689,10 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.pop(R16.DE)
                 break
             case 0xd2: // JP NC a16 [----]
-                if (!cpu.F.c) cpu.jp(cpu.nextWord())
+                cpu.jp_nc()
                 break
             case 0xd4: // CALL NC a16 [----]
-                if (!cpu.F.c) cpu.call(cpu.nextWord())
+                cpu.call_nc()
                 break
             case 0xd5: // PUSH DE  [----]
                 cpu.push(R16.DE)
@@ -711,10 +711,10 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.reti()
                 break
             case 0xda: // JP C a16 [----]
-                if (cpu.F.c) cpu.jp(cpu.nextWord())
+                cpu.jp_c()
                 break
             case 0xdc: // CALL C a16 [----]
-                if (cpu.F.c) cpu.call(cpu.nextWord())
+                cpu.call_c()
                 break
             case 0xde: // SBC A d8 [Z1HC]
                 cpu.sbc(cpu.nextByte())
@@ -748,7 +748,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.add_SP_r8()
                 break
             case 0xe9: // JP (HL)  [----]
-                
+                cpu.jp_valHL()
                 break
             case 0xea: // LD (a16) A [----]
                 

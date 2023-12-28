@@ -54,4 +54,3 @@ export const int8 = (n: number) => {
     return (n & 0x7F) * sign
 }
 
-

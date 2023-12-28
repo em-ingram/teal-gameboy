@@ -169,6 +169,17 @@ export class CPU {
         this.SP = word
     }
 
+    toString() {
+        return `
+        A: ${this.A.toString(16)}\tF: ${this.F.z ? 1 : 0}${this.F.n ? 1 : 0}${this.F.h ? 1 : 0}${this.F.c ? 1 : 0}
+        B: ${this.B.toString(16)}\tC: ${this.C.toString(16)}
+        D: ${this.D.toString(16)}\tE: ${this.D.toString(16)}
+        H: ${this.H.toString(16)}\tL: ${this.L.toString(16)}
+
+        PC: ${this.PC.toString(16)}\tSP: ${this.SP.toString(16)}`
+
+    }
+
     // reads next byte at PC and advances PC
     nextByte() {
         return this.mmu.rb(this.PC += 1)
@@ -411,10 +422,94 @@ export class CPU {
         this.F.h = false
     }
 
+    _jr = (r8: number) => {
+        this.PC = uint16(this.PC + r8)
+    }
+
     // JR r8 [----]
     // relative jump to PC +/- r8 (int8)
-    jr = (r8: number) => {
-        this.PC = uint16(this.PC + r8)
+    jr = () => {
+        const r8 = int8(this.nextByte())
+        this._jr(r8)
+    }
+    // JR NZ r8 [----]
+    // JR Z r8 [----]
+    // JR NC r8 [----]
+    // JR C r8 [----]
+    // conditional relative jump to PC +/- r8 if Z/C flag is/isn't set
+    jr_nz = () => {
+        const r8 = int8(this.nextByte())
+        if (!this.F.z) this._jr(r8) 
+    }
+    jr_z = () => {
+        const r8 = int8(this.nextByte())
+        if (this.F.z) this._jr(r8) 
+    }
+    jr_nc = () => {
+        const r8 = int8(this.nextByte())
+        if (!this.F.c) this._jr(r8) 
+    }
+    jr_c = () => {
+        const r8 = int8(this.nextByte())
+        if (this.F.c) this._jr(r8) 
+    }
+
+    // JP a16
+    jp = () => {
+        const a16 = this.nextWord()
+        this.PC = a16
+    }
+    jp_nz = () => {
+        const a16 = this.nextWord()
+        if (!this.F.z) this.PC = a16
+    }
+    jp_z = () => {
+        const a16 = this.nextWord()
+        if (this.F.z) this.PC = a16
+    }
+    jp_nc = () => {
+        const a16 = this.nextWord()
+        if (!this.F.c) this.PC = a16
+    }
+    jp_c = () => {
+        const a16 = this.nextWord()
+        if (this.F.c) this.PC = a16
+    }
+
+    // JP (HL)
+    jp_valHL = () => {
+        this.PC = this.mmu.rw(this.getHL())
+    }
+
+    _call = (a16: number) => {
+        const sp = this.SP -= 2
+        console.log(sp.toString(16))
+        this.mmu.ww(sp, this.PC)
+        console.log(this.mmu.rw(sp).toString(16))
+        this.PC = a16
+    }
+
+    // CALL a16
+    // CALL NZ, Z, NC, C
+    call = () => {
+        const a16 = this.nextWord()
+        this._call(a16)
+    }
+    call_nz = () => {
+        const a16 = this.nextWord()
+        if (!this.F.z) this._call(a16)
+    }
+    call_z = () => {
+        const a16 = this.nextWord()
+        if (this.F.z) this._call(a16)
+    }
+    call_nc = () => {
+        const a16 = this.nextWord()
+        if (!this.F.c) this._call(a16)
+    }
+    call_c = () => {
+        const a16 = this.nextWord()
+        if (this.F.c) this._call(a16)
     }
 
     // HALT [----]
