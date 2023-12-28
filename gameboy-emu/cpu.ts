@@ -26,7 +26,7 @@ export enum R16 {
 // Memory addresses that can be jumped to by the RST instruction
 export enum RSTVector {
     $00 = 0x00, 
-    $08 = 0x80,
+    $08 = 0x08,
     $10 = 0x10, 
     $18 = 0x18,
     $20 = 0x20, 
@@ -80,8 +80,8 @@ export class CPU {
 
     jumped: boolean = false // records whether prev instruction was a jump
     
-    ime: boolean = false; // Interrupt Master Enable
-    setIMENext: boolean = false; // Set IME on next instruction; used by Ei() command
+    imeEnabled: boolean = false; // Interrupt Master Enable
+    imeScheduled: boolean = false; // Set IME on next instruction; used by Ei() command
 
     mmu: MMU
 
@@ -295,10 +295,6 @@ export class CPU {
         this.F.h = false
     }
 
-    stop = () => {
-        this.stopped = true
-    }
-
     // ADD HL reg16 [-0hc]
     add_HL_reg16 = (reg16: R16) => {
         const val = this.getR16(reg16)
@@ -361,6 +357,36 @@ export class CPU {
         this.F.n = false
         this.F.h = r8 > 0 ? addHalfCarriesByte(sp, r8) : subHalfCarriesByte(sp, r8)
         this.F.c = r8 > 0 ? addCarriesByte(sp, r8) : subCarriesByte(sp, r8)
+    }
+
+    // LDH (a8) A
+    ldh_vala8_A = () => {
+        this.mmu.wb(0xFF00 + this.nextByte(), this.A)
+    }
+
+    // LDH A (a8)
+    ldh_A_vala8 = () => {
+        this.A = this.mmu.rb(0xFF00 + this.nextByte())
+    } 
+
+    // LD (C) A
+    ld_valC_A = () => {
+        this.mmu.wb(0xFF00 + this.C, this.A)
+    }
+
+    // LD A (C)
+    ld_A_valC = () => {
+        this.A = this.mmu.rb(0xFF00 + this.C)
+    }
+
+    // LD (a16) A
+    ld_vala16_A = () => {
+        this.mmu.ww(this.nextWord(), this.A)
+    } 
+
+    // LD A (a16)
+    ld_A_vala16 = () => {
+        this.A = this.mmu.rw(this.nextWord())
     }
 
     // INC (HL) [z0h-]
@@ -483,9 +509,7 @@ export class CPU {
 
     _call = (a16: number) => {
         const sp = this.SP -= 2
-        console.log(sp.toString(16))
         this.mmu.ww(sp, this.PC)
-        console.log(this.mmu.rw(sp).toString(16))
         this.PC = a16
     }
 
@@ -512,10 +536,67 @@ export class CPU {
         if (this.F.c) this._call(a16)
     }
 
+    // RET
+    // RET NZ, Z, NC, C
+    ret = () => {
+        // pop value off stack
+        const addr = this.mmu.rw(this.SP)
+        this.SP += 2
+        // set PC to popped value
+        this.PC = addr
+    }
+    ret_nz = () => {
+        if (!this.F.z) this.ret()
+    }
+    ret_z = () => {
+        if (this.F.z) this.ret()
+    }
+    ret_nc = () => {
+        if (!this.F.c) this.ret()
+    }
+    ret_c = () => {
+        if (this.F.c) this.ret()
+    }
+
+    // RETI
+    // return and enable interrupts (immediately, unlike EI)
+    reti = () => {
+        this.imeEnabled = true
+        this.ret()
+    }
+
+    // RST
+    rst = (addr: RSTVector) => {
+        // push PC onto stack
+        const sp = this.SP -= 2
+        this.mmu.ww(sp, this.PC)
+        // Jump to reset vector
+        this.PC = addr
+    }
+
+    // IME
+    // Enable interrupts after next machine cycle
+    ime = () => {
+        this.imeScheduled = true
+    }
+
+    // DI
+    // Disable interrupts
+    di = () => {
+        this.imeEnabled = false
+    }
+
     // HALT [----]
     // TODO there's apparently a HALT bug that I need to implement lol
     halt = () => {
         this.halted = true
+    }
+
+    // STOP [----]
+    stop = () => {
+        // read and discard next byte
+        this.nextByte()
+        this.stopped = true
     }
 
     // ADD A {r8, d8} [z0hc]

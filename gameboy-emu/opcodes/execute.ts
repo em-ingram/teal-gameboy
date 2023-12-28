@@ -1,4 +1,4 @@
-// generated from generate_execute.js at 12/27/2023 11:50:59 PM 
+// generated from generate_execute.js at 12/28/2023 3:30:35 AM 
 import { CPU, R8, R16, RSTVector } from "../cpu"
 import { int8 } from "../utils"
 
@@ -117,7 +117,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.setHL(cpu.nextWord())
                 break
             case 0x22: // LD (HL+) A [----]
-                cpu.ld_valHLinc_A()
+                cpu.ld_valHLplus_A()
                 break
             case 0x23: // INC HL  [----]
                 cpu.inc_reg16(R16.HL)
@@ -142,7 +142,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.add_HL_reg16(R16.HL)
                 break
             case 0x2a: // LD A (HL+) [----]
-                cpu.ld_A_valHLinc()
+                cpu.ld_A_valHLplus()
                 break
             case 0x2b: // DEC HL  [----]
                 cpu.dec_reg16(R16.HL)
@@ -169,7 +169,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.setSP(cpu.nextWord())
                 break
             case 0x32: // LD (HL-) A [----]
-                cpu.ld_valHLdec_A()
+                cpu.ld_valHLminus_A()
                 break
             case 0x33: // INC SP  [----]
                 cpu.inc_reg16(R16.SP)
@@ -194,7 +194,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.add_HL_reg16(R16.SP)
                 break
             case 0x3a: // LD A (HL-) [----]
-                cpu.ld_A_valHLdec()
+                cpu.ld_A_valHLminus()
                 break
             case 0x3b: // DEC SP  [----]
                 cpu.dec_reg16(R16.SP)
@@ -726,13 +726,13 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
 
 
             case 0xe0: // LDH (a8) A [----]
-                
+                cpu.ldh_vala8_A()
                 break
             case 0xe1: // POP HL  [----]
                 cpu.pop(R16.HL)
                 break
             case 0xe2: // LD (C) A [----]
-                
+                cpu.ld_valC_A()
                 break
             case 0xe5: // PUSH HL  [----]
                 cpu.push(R16.HL)
@@ -751,7 +751,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.jp_valHL()
                 break
             case 0xea: // LD (a16) A [----]
-                
+                cpu.ld_vala16_A()
                 break
             case 0xee: // XOR d8  [Z000]
                 cpu.xor(cpu.nextByte())
@@ -763,16 +763,16 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
 
 
             case 0xf0: // LDH A (a8) [----]
-                
+                cpu.ldh_A_vala8()
                 break
             case 0xf1: // POP AF  [ZNHC]
                 cpu.pop_AF()
                 break
             case 0xf2: // LD A (C) [----]
-                
+                cpu.ld_A_valC()
                 break
             case 0xf3: // DI   [----]
-                
+                cpu.di()
                 break
             case 0xf5: // PUSH AF  [----]
                 cpu.push_AF()
@@ -791,10 +791,10 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 cpu.SP = cpu.getHL()
                 break
             case 0xfa: // LD A (a16) [----]
-                
+                cpu.ld_A_vala16()
                 break
             case 0xfb: // EI   [----]
-                
+                cpu.ei()
                 break
             case 0xfe: // CP d8  [Z1HC]
                 cpu.cp(cpu.nextByte())

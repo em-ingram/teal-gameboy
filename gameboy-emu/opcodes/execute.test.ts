@@ -759,7 +759,6 @@ describe("jumps", () => {
         ],
     ])('JP (HL) test %#: %d %o', testHelper)
 
-
     // CALL a16
     test.each([
         [ Opcode.CALL_a16,
@@ -819,65 +818,105 @@ describe("jumps", () => {
     ])('CALL a16 test %#: %d %o', testHelper)
 
     // RST
+    test.each([
+        [ Opcode.RST_00H,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x0000, F: [0,1,1,0]},
+        ],
+        [ Opcode.RST_08H,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x0008, F: [0,1,1,0]},
+        ],
+        [ Opcode.RST_10H,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x0010, F: [0,1,1,0]},
+        ],
+        [ Opcode.RST_18H,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x0018, F: [0,1,1,0]},
+        ],
+        [ Opcode.RST_20H,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x0020, F: [0,1,1,0]},
+        ],
+        [ Opcode.RST_28H,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x0028, F: [0,1,1,0]},
+        ],
+        [ Opcode.RST_30H,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x0030, F: [0,1,1,0]},
+        ],
+        [ Opcode.RST_38H,
+            {PC: 0xc000, F: [0,1,1,0]},
+            {PC: 0x0038, F: [0,1,1,0]},
+        ],
+    ])('RST test %#: %d %o', testHelper)
 
     // RET
     test.each([
-        [ Opcode.CALL_a16,
+        [ Opcode.RET,
+            {PC: 0xdddd, SP: 0xFFFC, F: [0,1,1,0]},
             {PC: 0xc000, SP: 0xFFFE, F: [0,1,1,0]},
-            {PC: 0x1234, SP: 0xFFFC, F: [0,1,1,0]},
-            {0xc001: [0x12, 0x34], 0xFFFC: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFC: [0xc0, 0x02]} 
+            {0xFFFC: [0xc0, 0x00]},
         ],
-        [ Opcode.CALL_NC_a16, // c = 0, yes jump
-            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
-            {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
-        ],
-        [ Opcode.CALL_NC_a16, // c = 1, no jump
-            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
-            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,1]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
-        ],
-        [ Opcode.CALL_C_a16, // c = 1, yes jump
-            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
-            {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,1]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
-        ],
-        [ Opcode.CALL_C_a16, // c = 0, no jump
-            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
-            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,0]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
-        ],
-        [ Opcode.CALL_NZ_a16, // z = 0, yes jump
-            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
-            {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
-        ],
-        [ Opcode.CALL_NZ_a16, // z = 1, no jump
-            {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,1]},
-            {PC: 0xc002, SP: 0xFFFC, F: [1,1,1,1]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
-        ],
-        [ Opcode.CALL_Z_a16, // z = 1, yes jump
-            {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,1]},
-            {PC: 0x1234, SP: 0xFFFA, F: [1,1,1,1]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
-        ],
-        [ Opcode.CALL_Z_a16, // z = 0, no jump
-            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
-            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,0]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
-        ],
-    ])('CALL a16 test %#: %d %o', testHelper)
+        // [ Opcode.RET_NC, // c = 0, yes ret
+        //     {PC: 0xdddd, SP: 0xFFFA, F: [0,1,1,0]},
+        //     {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,0]},
+        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
+        // ],
+        // [ Opcode.RET_NC, // c = 1, no ret
+        //     {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
+        //     {PC: 0xc001, SP: 0xFFFC, F: [0,1,1,1]},
+        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+        // ],
+        // [ Opcode.RET_C, // c = 1, yes ret
+        //     {PC: 0xc000, SP: 0xFFFA, F: [0,1,1,1]},
+        //     {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,1]},
+        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
+        // ],
+        // [ Opcode.RET_C, // c = 0, no ret
+        //     {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+        //     {PC: 0xc001, SP: 0xFFFC, F: [0,1,1,0]},
+        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+        // ],
+        // [ Opcode.RET_NZ, // z = 0, yes ret
+        //     {PC: 0xc000, SP: 0xFFFA, F: [0,1,1,1]},
+        //     {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,1]},
+        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
+        // ],
+        // [ Opcode.RET_NZ, // z = 1, no ret
+        //     {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,0]},
+        //     {PC: 0xc001, SP: 0xFFFC, F: [1,1,1,0]},
+        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+        // ],
+        // [ Opcode.RET_Z, // z = 1, yes ret
+        //     {PC: 0xc000, SP: 0xFFFA, F: [1,1,1,1]},
+        //     {PC: 0xc0ff, SP: 0xFFFC, F: [1,1,1,1]},
+        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
+        // ],
+        // [ Opcode.RET_Z, // z = 0, no ret
+        //     {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+        //     {PC: 0xc001, SP: 0xFFFC, F: [0,1,1,0]},
+        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+        // ],
+    ])('RET a16 test %#: %d %o', testHelper)
+
     // RETI
+})
+
+describe("8 bit loads", () => {
+    // LD (HL+) A 
+    // LD A (HL-) 
+    // LD (HL-) A 
+    // LD A (HL+) 
+
+    // LDH (a8) A
+    // LDH A (a8)
+    // LD (C) A
+    // LD A (C)
+    // LD (a16) A
+    // LD A (a16)
 })
 
 // describe("bit shifts", () => {

@@ -18,11 +18,6 @@ Object.values(opcodes.unprefixed).forEach( opc => {
     const addr = parseInt(opc.addr)
     let fn = `cpu.${opc.mnemonic.toLowerCase()}`
 
-    // stop
-    if (addr === 0x10) {
-        code += `cpu.stop()`
-    }
-
     // 16 bit loads
     const ld16_instrs = [
         0x01, // LD BC d16
@@ -109,10 +104,10 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         0x0a: `cpu.A = cpu.mmu.rb(cpu.getBC())`, // LD A (BC)
         0x1a: `cpu.A = cpu.mmu.rb(cpu.getDE())`, // LD A (DE)
 
-        0x22: `cpu.ld_valHLinc_A()`, // LD (HL+) A
-        0x32: `cpu.ld_valHLdec_A()`, // LD (HL-) A
-        0x2a: `cpu.ld_A_valHLinc()`, // LD A (HL+)
-        0x3a: `cpu.ld_A_valHLdec()`, // LD A (HL-)
+        0x22: `cpu.ld_valHLplus_A()`, // LD (HL+) A
+        0x32: `cpu.ld_valHLminus_A()`, // LD (HL-) A
+        0x2a: `cpu.ld_A_valHLplus()`, // LD A (HL+)
+        0x3a: `cpu.ld_A_valHLminus()`, // LD A (HL-)
 
         0x06: `cpu.B = cpu.nextByte()`, // LD B d8
         0x0e: `cpu.C = cpu.nextByte()`, // LD C d8
@@ -121,10 +116,27 @@ Object.values(opcodes.unprefixed).forEach( opc => {
         0x26: `cpu.H = cpu.nextByte()`, // LD H d8
         0x2e: `cpu.L = cpu.nextByte()`, // LD L d8
         0x36: `cpu.mmu.wb(cpu.getHL(), cpu.nextByte())`, // LD (HL) d8
-        0x3e: `cpu.A = cpu.nextByte()` // LD A d8
+        0x3e: `cpu.A = cpu.nextByte()`, // LD A d8
+
+        0xe0: `cpu.ldh_vala8_A()`, // LDH (a8) A
+        0xf0: `cpu.ldh_A_vala8()`, // LDH A (a8)
+        0xe2: `cpu.ld_valC_A()`, // LD (C) A
+        0xf2: `cpu.ld_A_valC()`, // LD A (C)
+        0xea: `cpu.ld_vala16_A()`, // LD (a16) A
+        0xfa: `cpu.ld_A_vala16()`, // LD A (a16)
     }
     if (misc_8bit_loads_map[addr]) {
         code += misc_8bit_loads_map[addr]
+    }
+
+    // DI, EI, STOP
+    const misc_control_map = {
+        0x10: `cpu.stop()`, // STOP
+        0xf3: `cpu.di()`, // DI
+        0xfb: `cpu.ei()`, // EI
+    }
+    if (misc_control_map[addr]) {
+        code += misc_control_map[addr]
     }
 
     // Simple 8 bit loads (LD A B etc)
