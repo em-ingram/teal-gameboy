@@ -8,7 +8,8 @@ import {
     addHalfCarriesByte,
     subHalfCarriesByte,
     addCarriesWord,
-    addHalfCarriesWord
+    addHalfCarriesWord,
+    BYTE_MASK
 } from '../utils'
 
 
@@ -41,50 +42,56 @@ export const dec_reg8 = (cpu: CPU, reg8: Reg8) => {
     // c -
 }
 
+const rlc = (n: number): [number, boolean] => {
+    const carry = (n & 0x80) != 0
+    if (carry) {
+        // shift left, discard top bit
+        n = (n << 1) & BYTE_MASK
+        // set bit 0 to 1 (wrap bit 7 around)
+        n |= 0x01
+    } else {
+        // top bit is 0, safe to shift left.
+        n = n << 1
+    }
+    return [n, carry]
+}
+
 // RLCA [000c]
 // rotates A left one bit, with bit 7 moved to bit 0 and also stored in the carry.
 export const rlca = (cpu: CPU) => {
-    const carry = (cpu.A & 0x80) != 0
-    if (carry) {
-        // shift left, discard top bit
-        cpu.A = cpu.A << 1
-        // set bit 0 to 1 (wrap bit 7 around)
-        cpu.A |= 0x01
-        // store bit in carry
-        cpu.F.c = true
-    } else {
-        // top bit is 0, safe to shift left.
-        cpu.A = cpu.A << 1
-        // store bit in carry
-        cpu.F.c = false
-    }
+    const [n, carry] = rlc(cpu.A)
+    cpu.A = n
 
     cpu.F.z = false
     cpu.F.n = false
     cpu.F.h = false
+    cpu.F.c = carry
+}
+
+const rrc = (n: number): [number, boolean] => {
+    const carry = (n & 0x01) != 0
+    if (carry) {
+        // shift right (discard bottom bit)
+        n = (n >> 1) && BYTE_MASK
+        // set top bit to 1 (wrap bit 0 around)
+        n |= 0x80
+    } else {
+        // bottom bit is 0, safe to right shift
+        n = n >> 1
+    }
+    return [n, carry]
 }
 
 // RRCA [000c]
 // rotates A one bit right with bit 0 moved to bit 7 and also stored in the carry.
 export const rrca = (cpu: CPU) => {
-    const carry = (cpu.A & 0x01) != 0
-    if (carry) {
-        // shift right (discard bottom bit)
-        cpu.A = cpu.A >> 1
-        // set top bit to 1 (wrap bit 0 around)
-        cpu.A |= 0x80
-        // store old bottom bit in carry
-        cpu.F.c = true
-    } else {
-        // bottom bit is 0, safe to right shift
-        cpu.A = cpu.A >> 1
-        // store old bottom bit in carry
-        cpu.F.c = false
-    }
+    const [n, carry] = rrc(cpu.A)
+    cpu.A = n
     
     cpu.F.z = false
     cpu.F.n = false
     cpu.F.h = false
+    cpu.F.c = carry
 }
 
 // ADD HL reg16 [-0hc]
@@ -206,36 +213,52 @@ export const dec_valHL = (cpu: CPU) => {
     // c -
 }
 
+// rotates byte n one bit left with carry moved to bit 0
+// and bit 7 moved to carry.
+const rl = (n: number, carry: boolean): [number, boolean] => {
+    const newCarry = (n & 0x80) !== 0 ? true : false
+    n = (n << 1) & BYTE_MASK
+    if (carry) {
+        n |= 0x01
+    }
+    return [n, newCarry]
+}
+
 // RLA [000c]
 // rotates A one bit left with the carry moved to bit 0
 // and bit 7 moved to the carry.
 export const rla = (cpu: CPU) => {
-    const oldCarry = cpu.F.c ? 1 : 0
-    // if top bit is 1, move bit to carry
-    cpu.F.c = (cpu.A & 0x80) !== 0 ? true : false
-    // shift A left one bit and set bit 0 to the value of the old carry
-    cpu.A = cpu.A << 1
-    cpu.A |= oldCarry
+    const [n, carry] = rl(cpu.A, cpu.F.c)
+    cpu.A = n
 
     cpu.F.z = false
     cpu.F.n = false
     cpu.F.h = false
+    cpu.F.c = carry
+}
+
+// rotates byte n one bit right with carry moved to bit 7
+// and bit 0 moved to carry.
+const rr = (n: number, carry: boolean): [number, boolean] => {
+    const newCarry = (n & 0x01) !== 0 ? true : false
+    n = (n >> 1) & BYTE_MASK
+    if (carry) {
+        n |= 0x80
+    }
+    return [n, newCarry]
 }
 
 // RRA [000c]
 // rotates A one bit right with the carry moved to bit 7
 // and bit 0 moved to the carry.
 export const rra = (cpu: CPU) => {
-    const oldCarry = cpu.F.c ? 1 : 0
-    // if top bit is 1, move bit to carry
-    cpu.F.c = (cpu.A & 0x01) !== 0 ? true : false
-    // shift A right one bit and set bit 7 to the value of the old carry
-    cpu.A = cpu.A >> 1
-    cpu.A |= oldCarry << 7
+    const [n, carry] = rr(cpu.A, cpu.F.c)
+    cpu.A = n
 
     cpu.F.z = false
     cpu.F.n = false
     cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const _jr = (cpu: CPU, r8: number) => {
@@ -523,7 +546,7 @@ export const daa = (cpu: CPU) => {
 // CPL [-11-]
 // A ~= 0xFF (aka complement of A)
 export const cpl = (cpu: CPU) => {
-    cpu.A ^= 0xFF
+    cpu.A ^= BYTE_MASK
     
     // z -
     cpu.F.n = true
@@ -561,53 +584,112 @@ export const add_SP_r8 = (cpu: CPU) => {
     cpu.F.c = r8 > 0 ? addCarriesByte(sp, r8) : uint8(sp) - r8 < 0
 }
 
-// PUSH Reg16
-export const push = (cpu: CPU, reg16: Reg16) => {
+export const pushReg16 = (cpu: CPU, reg16: Reg16) => {
     cpu.mmu.ww(cpu.SP-=2, cpu.getR16(reg16))
 }
 
-// POP Reg16
-export const pop = (cpu: CPU, reg16: Reg16) => {
+export const popReg16 = (cpu: CPU, reg16: Reg16) => {
     cpu.setR16(reg16, cpu.mmu.rw(cpu.SP))
     cpu.SP += 2
 }
 
 // POP AF [znhc]
-export const pop_AF = (cpu: CPU) => pop(cpu, Reg16.AF)
+export const pop_AF = (cpu: CPU) => popReg16(cpu, Reg16.AF)
 
 // PUSH AF 
-export const push_AF = (cpu: CPU) => push(cpu, Reg16.AF)
+export const push_AF = (cpu: CPU) => pushReg16(cpu, Reg16.AF)
 
+
+// RLC Reg8 [z00c*] 
+// rotates Reg8 left one bit, with bit 7 moved to bit 0 and also stored in the carry.
+//  * - carry flag is set to bit 7 of Reg8
 export const rlc_r8 = (cpu: CPU, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    let r8 = cpu.getR8(reg8)
+    let [n, carry] = rlc(r8)
+    cpu.setR8(reg8, n)
+
+    cpu.F.z = true
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
+// RLC (HL) [z00c*]
 export const rlc_valHL = (cpu: CPU) => {
-    throw new Error('Function not implemented.');
+    let valHL = cpu.mmu.rb(cpu.getHL())
+    let [n, carry] = rlc(valHL)
+    cpu.mmu.wb(cpu.getHL(), n)
+
+    cpu.F.z = true
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const rrc_r8 = (cpu: CPU, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    let r8 = cpu.getR8(reg8)
+    let [n, carry] = rrc(r8)
+    cpu.setR8(reg8, n)
+
+    cpu.F.z = true
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const rrc_valHL = (cpu: CPU) => {
-    throw new Error('Function not implemented.');
+    let valHL = cpu.mmu.rb(cpu.getHL())
+    let [n, carry] = rrc(valHL)
+    cpu.mmu.wb(cpu.getHL(), n)
+
+    cpu.F.z = true
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const rl_r8 = (cpu: CPU, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    let r8 = cpu.getR8(reg8)
+    let [n, carry] = rl(r8, cpu.F.c)
+    cpu.setR8(reg8, n)
+
+    cpu.F.z = true
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const rl_valHL = (cpu: CPU) => {
-    throw new Error('Function not implemented.');
+    let valHL = cpu.mmu.rb(cpu.getHL())
+    let [n, carry] = rl(valHL, cpu.F.c)
+    cpu.mmu.wb(cpu.getHL(), n)
+
+    cpu.F.z = true
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const rr_r8 = (cpu: CPU, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    let r8 = cpu.getR8(reg8)
+    let [n, carry] = rr(r8, cpu.F.c)
+    cpu.setR8(reg8, n)
+
+    cpu.F.z = true
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const rr_valHL = (cpu: CPU) => {
-    throw new Error('Function not implemented.');
+    let r8 = cpu.mmu.rb(cpu.getHL())
+    let [n, carry] = rr(r8, cpu.F.c)
+    cpu.mmu.wb(cpu.getHL(), n)
+
+    cpu.F.z = true
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const sla_r8 = (cpu: CPU, reg8: Reg8) => {

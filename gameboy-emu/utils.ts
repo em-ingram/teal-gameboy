@@ -1,3 +1,5 @@
+export const BYTE_MASK = 0xFF
+
 export const addCarriesByte = (a: number, b: number): boolean => {
     return (a + b) > 0xFF
 }
@@ -50,6 +52,7 @@ export const uint16 = (n: number) => {
 }
     
 export const int8 = (n: number) => {
+    // TODO I think I need to add the underflow logic here, and remove it from uint8 / uint16.
     const sign = n & 0x80 ? -1 : 1
     return (n & 0x7F) * sign
 }

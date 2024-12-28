@@ -1,6 +1,6 @@
 import { describe, test, expect } from 'vitest';
 
-import { setupCPU, setupMMU, dumpState, CPUState, MMUState } from './__test__/setup';
+import { setupCPU, setupMMU, dumpState, CPUState, MMUState } from './__test__/test-helpers';
 import { Opcode } from '../opcodes/opcodes';
 
 /**
@@ -966,6 +966,7 @@ describe("jumps", () => {
         ],
         [ Opcode.RET_Z, // z = 1, yes ret
             {PC: 0xc000, SP: 0xFFFA, F: [1,1,1,1]},
+
             {PC: 0xc0ff, SP: 0xFFFC, F: [1,1,1,1]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
         ],
@@ -1000,43 +1001,245 @@ describe.skip("8 bit loads", () => {
     // LD A (a16)
 })
 
-describe.skip("bit shifts", () => {
-//     // RLCA [000c]
-//     // RRCA [000c]
-//     // RLA [000c]
-//     // RRA [000c]
+describe("bit shifts", () => {
+    // RLCA [000c]
+    test.each([
+        [ Opcode.RLCA,
+            {A: 0x80 /* 0b1000_0000 */, F: [1,1,1,1]},
+            {A: 0x01 /* 0b0000_0001 */, F: [0,0,0,1]},
+        ],
+        [ Opcode.RLCA,
+            {A: 0x40 /* 0b0100_0000 */, F: [1,0,1,1]},
+            {A: 0x80 /* 0b1000_0000 */, F: [0,0,0,0]},
+        ],
+    ])('RLCA test %#: %d %o', testHelper)
 
-//     // CB RLC Reg8 [z00c]
-//     // CB RLC (HL) [z00c]
+    // RRCA [000c]
+    test.each([
+        [ Opcode.RRCA,
+            {A: 0x01 /* 0b0000_0001 */, F: [1,1,1,1]},
+            {A: 0x80 /* 0b1000_0000 */, F: [0,0,0,1]},
+        ],
+        [ Opcode.RRCA,
+            {A: 0x02 /* 0b0000_0010 */, F: [1,0,1,1]},
+            {A: 0x01 /* 0b0000_0001 */, F: [0,0,0,0]},
+        ],
+    ])('RRCA test %#: %d %o', testHelper)
 
-//     // CB RRC Reg8 [z00c]
-//     // CB RRC (HL) [z00c]
+    // RLA [000c]
+    test.each([
+        [ Opcode.RLA,
+            {A: 0x80 /* 0b1000_0000 */, F: [1,1,1,0]},
+            {A: 0x00 /* 0b0000_0000 */, F: [0,0,0,1]},
+        ],
+        [ Opcode.RLA,
+            {A: 0x40 /* 0b0100_0000 */, F: [1,0,1,1]},
+            {A: 0x81 /* 0b1000_0001 */, F: [0,0,0,0]},
+        ],
+    ])('RLA test %#: %d %o', testHelper)
 
-//     // CB RL Reg8 [z00c]
-//     // CB RL (HL) [z00c]
+    // RRA [000c]
+    test.each([
+        [ Opcode.RRA,
+            {A: 0x01 /* 0b0000_0001 */, F: [1,1,1,0]},
+            {A: 0x00 /* 0b0000_0000 */, F: [0,0,0,1]},
+        ],
+        [ Opcode.RRA,
+            {A: 0x01 /* 0b0000_0001 */, F: [1,0,1,1]},
+            {A: 0x80 /* 0b1000_0000 */, F: [0,0,0,1]},
+        ],
+    ])('RRA test %#: %d %o', testHelper)
 
-//     // CB RR Reg8 [z00c]
-//     // CB RR (HL) [z00c]
+    // CB RLC Reg8 [z00c]
+    test.each([
+        [ Opcode.RLC_B,
+            {B: 0x80 /* 0b1000_0000 */, F: [0,1,1,1]},
+            {B: 0x01 /* 0b0000_0001 */, F: [1,0,0,1]},
+            {}, {}, true
+        ],
+        [ Opcode.RLC_D,
+            {D: 0x40 /* 0b0100_0000 */, F: [1,0,1,1]},
+            {D: 0x80 /* 0b1000_0000 */, F: [1,0,0,0]},
+            {}, {}, true
+        ],
+    ])('RLC Reg8 test %#: %d %o', testHelper)
 
-//     // CB SLA Reg8 [z00c]
-//     // CB SLA (HL) [z00c]
+    // CB RLC (HL) [z00c]
+    test.each([
+        [ Opcode.RLC_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,1]},
+            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {0xD000: 0x80 /* 0b1000_0000 */ }, 
+            {0xD000: 0x01/* 0b0000_0001 */ }, 
+            true
+        ],
+        [ Opcode.RLC_valHL,
+            {H: 0xD0, L: 0x00, F: [1,0,1,1]},
+            {H: 0xD0, L: 0x00, F: [1,0,0,0]},
+            {0xD000: 0x40 /* 0b0100_0000 */ }, 
+            {0xD000: 0x80/* 0b1000_0000 */ }, 
+            true
+        ],
+    ])('RLC_valHL test %#: %d %o', testHelper)
 
-//     // CB SRA Reg8 [z000]
-//     // CB SRA (HL) [z000]
+    // CB RRC Reg8 [z00c]
+    test.each([
+        [ Opcode.RRC_C,
+            {C: 0x01 /* 0b0000_0001 */, F: [0,1,1,1]},
+            {C: 0x80 /* 0b1000_0000 */, F: [1,0,0,1]},
+            {}, {}, true
+        ],
+        [ Opcode.RRC_E,
+            {E: 0x02 /* 0b0000_0010 */, F: [1,0,1,1]},
+            {E: 0x01 /* 0b0000_0001 */, F: [1,0,0,0]},
+            {}, {}, true
+        ],
+    ])('RRCA test %#: %d %o', testHelper)
 
-//     // CB SWAP Reg8 [z000]
-//     // CB SWAP (HL) [z000]
+    // CB RRC (HL) [z00c]
+    test.each([
+        [ Opcode.RRC_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,1]},
+            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {0xD000: 0x01}, 
+            {0xD000: 0x80}, 
+            true
+        ],
+    ])('RRC valHL test %#: %d %o', testHelper)
 
-//     // CB SRL Reg8 [z00c]
-//     // CB SRL (HL) [z00c]
+    // CB RL Reg8 [z00c]
+    test.each([
+        [ Opcode.RL_H,
+            {H: 0x80 /* 0b1000_0000 */, F: [0,1,1,0]},
+            {H: 0x00 /* 0b0000_0000 */, F: [1,0,0,1]},
+            {}, {}, true
+        ],
+        [ Opcode.RL_L,
+            {L: 0x40 /* 0b0100_0000 */, F: [1,0,1,1]},
+            {L: 0x81 /* 0b1000_0001 */, F: [1,0,0,0]},
+            {}, {}, true
+        ],
+    ])('RL Reg8 test %#: %d %o', testHelper)
 
-//     // BIT n Reg8 [z01-]
-//     // BIT n (HL) [z01-]
+    // CB RL (HL) [z00c]
+    test.each([
+        [ Opcode.RL_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {0xD000: 0x80}, 
+            {0xD000: 0x00}, 
+            true
+        ],
+    ])('RL valHL test %#: %d %o', testHelper)
 
-//     // RES n Reg8 [----]
-//     // RES n (HL) [----]
+    // CB RR Reg8 [z00c]
+    test.each([
+        [ Opcode.RR_B,
+            {B: 0x01 /* 0b0000_0001 */, F: [0,1,1,0]},
+            {B: 0x00 /* 0b0000_0000 */, F: [1,0,0,1]},
+            {}, {}, true
+        ],
+        [ Opcode.RR_C,
+            {C: 0x01 /* 0b0000_0001 */, F: [1,0,1,1]},
+            {C: 0x80 /* 0b1000_0000 */, F: [1,0,0,1]},
+            {}, {}, true
+        ],
+    ])('RR Reg8 test %#: %d %o', testHelper)
 
-//     // SET n Reg8 [----]
-//     // SET n (HL) [----]
+    // CB RR (HL) [z00c]
+    test.each([
+        [ Opcode.RR_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {0xD000: 0x01},
+            {0xD000: 0x00}, 
+            true
+        ],
+    ])('RR valHL test %#: %d %o', testHelper)
+
+    // CB SLA Reg8 [z00c]
+    test.each([
+        [ Opcode.SLA_B,
+            {B: 0x81, F: [0,1,1,0]},
+            {B: 0x02, F: [1,0,0,1]},
+            {},
+            {}, 
+            true
+        ],
+    ])('SLA Reg8 test %#: %d %o', testHelper)
+
+    // CB SLA (HL) [z00c]
+    test.each([
+        [ Opcode.SLA_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {0xD000: 0x81},
+            {0xD000: 0x02}, 
+            true
+        ],
+    ])('SLA valHL test %#: %d %o', testHelper)
+
+    // CB SRA Reg8 [z000]
+    test.each([
+        [ Opcode.SRA_B,
+            {B: 0x03, F: [0,1,1,0]},
+            {B: 0x01, F: [1,0,0,1]},
+            {},
+            {}, 
+            true
+        ],
+        [ Opcode.SRA_H,
+            {H: 0xF3 /* 0b1111_0010 */, F: [0,1,1,0]},
+            {H: 0xF9 /* 0b1111_1001 */, F: [1,0,0,1]},
+            {},
+            {}, 
+            true
+        ],
+    ])('SRA Reg8 test %#: %d %o', testHelper)
+
+    // CB SRA (HL) [z000]
+    test.each([
+        [ Opcode.SRA_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {0xD000: 0x83 /* 0b1000_0010 */},
+            {0xD000: 0xc1} /* 0b1100_0001 */, 
+            true
+        ],
+    ])('SRA valHL test %#: %d %o', testHelper)
+
+    // CB SWAP Reg8 [z000]
+    // CB SWAP (HL) [z000]
+
+    // CB SRL Reg8 [z00c]
+    test.each([
+        [ Opcode.SRL_H,
+            {H: 0xF4 /* 0b1111_0011 */, F: [0,1,1,0]},
+            {H: 0x79 /* 0b0111_1001 */, F: [1,0,0,1]},
+            {},
+            {}, 
+            true
+        ],
+    ])('SRL Reg8 test %#: %d %o', testHelper)
+
+    // CB SRL (HL) [z00c]
+    test.each([
+        [ Opcode.SRL_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {0xD000: 0x83 /* 0b1000_0010 */},
+            {0xD000: 0xa1} /* 0b0100_0001 */, 
+            true
+        ],
+    ])('SRL valHL test %#: %d %o', testHelper)
+
+    // BIT n Reg8 [z01-]
+    // BIT n (HL) [z01-]
+
+    // RES n Reg8 [----]
+    // RES n (HL) [----]
+
+    // SET n Reg8 [----]
+    // SET n (HL) [----]
 
 })

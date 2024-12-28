@@ -1,6 +1,6 @@
 import { CPU, Reg8, Reg16, RSTVector } from './cpu'
 
-import { adc, add, add_HL_reg16, add_SP_r8, and, bit_n_r8, bit_n_valHL, call, call_c, call_nc, call_nz, call_z, ccf, cp, cpl, daa, dec_reg16, dec_reg8, dec_valHL, di, ei, halt, inc_reg16, inc_reg8, inc_valHL, jp, jp_c, jp_nc, jp_nz, jp_valHL, jp_z, jr, jr_c, jr_nc, jr_nz, jr_z, ld_A_vala16, ld_A_valC, ld_A_valHLminus, ld_A_valHLplus, ld_HL_SPplusr8, ld_vala16_A, ld_valC_A, ld_valHLminus_A, ld_valHLplus_A, ldh_A_vala8, ldh_vala8_A, or, pop, pop_AF, push, push_AF, res_n_r8, res_n_valHL, ret, reti, rl_r8, rl_valHL, rla, rlc_r8, rlc_valHL, rlca, rr_r8, rr_valHL, rra, rrc_r8, rrc_valHL, rrca, rst, sbc, scf, set_n_r8, set_n_valHL, sla_r8, sla_valHL, sra_r8, sra_valHL, srl_r8, srl_valHL, stop, sub, swap_r8, swap_valHL, xor} from './execute-helpers';
+import { adc, add, add_HL_reg16, add_SP_r8, and, bit_n_r8, bit_n_valHL, call, call_c, call_nc, call_nz, call_z, ccf, cp, cpl, daa, dec_reg16, dec_reg8, dec_valHL, di, ei, halt, inc_reg16, inc_reg8, inc_valHL, jp, jp_c, jp_nc, jp_nz, jp_valHL, jp_z, jr, jr_c, jr_nc, jr_nz, jr_z, ld_A_vala16, ld_A_valC, ld_A_valHLminus, ld_A_valHLplus, ld_HL_SPplusr8, ld_vala16_A, ld_valC_A, ld_valHLminus_A, ld_valHLplus_A, ldh_A_vala8, ldh_vala8_A, or, popReg16, pop_AF, pushReg16, push_AF, res_n_r8, res_n_valHL, ret, reti, rl_r8, rl_valHL, rla, rlc_r8, rlc_valHL, rlca, rr_r8, rr_valHL, rra, rrc_r8, rrc_valHL, rrca, rst, sbc, scf, set_n_r8, set_n_valHL, sla_r8, sla_valHL, sra_r8, sra_valHL, srl_r8, srl_valHL, stop, sub, swap_r8, swap_valHL, xor} from './execute-helpers';
 
 export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
     cpu.PC += 1;
@@ -637,7 +637,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 if (!cpu.F.z) ret(cpu)
                 break
             case 0xc1: // POP BC  [----]
-                pop(cpu, Reg16.BC)
+                popReg16(cpu, Reg16.BC)
                 break
             case 0xc2: // JP NZ a16 [----]
                 jp_nz(cpu)
@@ -649,7 +649,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 call_nz(cpu)
                 break
             case 0xc5: // PUSH BC  [----]
-                push(cpu, Reg16.BC)
+                pushReg16(cpu, Reg16.BC)
                 break
             case 0xc6: // ADD A d8 [Z0HC]
                 add(cpu, cpu.advanceNextByte())
@@ -689,7 +689,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 if (!cpu.F.c) ret(cpu)
                 break
             case 0xd1: // POP DE  [----]
-                pop(cpu, Reg16.DE)
+                popReg16(cpu, Reg16.DE)
                 break
             case 0xd2: // JP NC a16 [----]
                 jp_nc(cpu)
@@ -698,7 +698,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 call_nc(cpu)
                 break
             case 0xd5: // PUSH DE  [----]
-                push(cpu, Reg16.DE)
+                pushReg16(cpu, Reg16.DE)
                 break
             case 0xd6: // SUB d8  [Z1HC]
                 sub(cpu, cpu.advanceNextByte())
@@ -732,13 +732,13 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 ldh_vala8_A(cpu)
                 break
             case 0xe1: // POP HL  [----]
-                pop(cpu, Reg16.HL)
+                popReg16(cpu, Reg16.HL)
                 break
             case 0xe2: // LD (C) A [----]
                 ld_valC_A(cpu)
                 break
             case 0xe5: // PUSH HL  [----]
-                push(cpu, Reg16.HL)
+                pushReg16(cpu, Reg16.HL)
                 break
             case 0xe6: // AND d8  [Z010]
                 and(cpu, cpu.advanceNextByte())
