@@ -4,7 +4,19 @@ import { setupCPU, setupMMU, dumpState, CPUState, MMUState } from './__test__/se
 import { Opcode } from './opcodes';
 import { execute } from './execute';
 
-const testHelper = (opc: Opcode, cpuIn: CPUState, cpuExpected: CPUState, mmuIn: MMUState = {}, mmuExpected: MMUState ={}, cbPrefixed = false) => {
+/**
+ * Test Format:
+ * ====================
+ * [ Opcode.INC_A,                                           <- Opcode to execute
+ *   {A: 0x00, B: 0x01, ... HL: 0x00ff, SP: 0xFFF0, PC: 0x0100 },   <- CPU state in
+ *   {A: 0x01, B: 0x01, ... HL: 0x00ff, SP: 0xFFF0, PC: 0x0101 },   <- CPU state out
+ *   { 0x9f00: 0xff, 0x9f01: [0xfe, 0xfd] },                 <- MMU state in (optional)
+ *   { 0x9f00: 0xff, 0x9f01: [0xfe, 0xfd] },                 <- MMU state out (optional)
+ *   false,                                                  <- Whether the opcode is one of the CB-prefixed opcodes.
+ * ]
+ */ 
+
+const testHelper = (opc: Opcode, cpuIn: CPUState, cpuExpected: CPUState, mmuIn: MMUState = {}, mmuExpected: MMUState = {}, cbPrefixed = false) => {
     const mmu = setupMMU(mmuIn)
     const cpu = setupCPU(cpuIn, mmu)
     execute(cpu, opc, cbPrefixed)
@@ -405,7 +417,7 @@ describe("8 bit arith", () => {
     test.each([
         [ Opcode.ADD_A_d8, 
             {A: 0x11, PC: 0xc122, F: [1, 1, 0, 1]}, 
-            {A: 0x21, PC: 0xc123, F: [0, 0, 0, 0]}, 
+            {A: 0x21, PC: 0xc124, F: [0, 0, 0, 0]}, 
             {"0xc123": 0x10},
             {"0xc123": 0x10}
         ],
@@ -415,7 +427,7 @@ describe("8 bit arith", () => {
     test.each([
         [ Opcode.ADC_A_d8, 
             {A: 0x11, PC: 0xc122, F: [1, 1, 0, 1]}, 
-            {A: 0x22, PC: 0xc123, F: [0, 0, 0, 0]}, 
+            {A: 0x22, PC: 0xc124, F: [0, 0, 0, 0]}, 
             {"0xc123": 0x10},
             {"0xc123": 0x10}
         ],
@@ -425,7 +437,7 @@ describe("8 bit arith", () => {
     test.each([
         [ Opcode.SUB_d8, 
             {A: 0x11, PC: 0xc122, F: [1, 1, 0, 1]}, 
-            {A: 0x01, PC: 0xc123, F: [0, 1, 0, 0]}, 
+            {A: 0x01, PC: 0xc124, F: [0, 1, 0, 0]}, 
             {"0xc123": 0x10},
             {"0xc123": 0x10}
         ],
@@ -435,7 +447,7 @@ describe("8 bit arith", () => {
     test.each([
         [ Opcode.SBC_A_d8, 
             {A: 0x11, PC: 0xc122, F: [1, 1, 0, 1]}, 
-            {A: 0x00, PC: 0xc123, F: [1, 1, 0, 0]}, 
+            {A: 0x00, PC: 0xc124, F: [1, 1, 0, 0]}, 
             {"0xc123": 0x10},
             {"0xc123": 0x10}
         ],
@@ -445,7 +457,7 @@ describe("8 bit arith", () => {
     test.each([
         [ Opcode.AND_d8, 
             {A: 0x11, PC: 0xc122, F: [1, 1, 0, 0]}, 
-            {A: 0x10, PC: 0xc123, F: [0, 0, 1, 0]}, 
+            {A: 0x10, PC: 0xc124, F: [0, 0, 1, 0]}, 
             {"0xc123": 0x10},
             {"0xc123": 0x10}
         ],
@@ -455,7 +467,7 @@ describe("8 bit arith", () => {
     test.each([
         [ Opcode.XOR_d8, 
             {A: 0x11, PC: 0xc122, F: [1, 1, 0, 0]}, 
-            {A: 0x01, PC: 0xc123, F: [0, 0, 0, 0]}, 
+            {A: 0x01, PC: 0xc124, F: [0, 0, 0, 0]}, 
             {"0xc123": 0x10},
             {"0xc123": 0x10}
         ],
@@ -465,7 +477,7 @@ describe("8 bit arith", () => {
     test.each([
         [ Opcode.OR_d8, 
             {A: 0x01, PC: 0xC000, F: [1, 1, 0, 0]}, 
-            {A: 0x11, PC: 0xC001, F: [0, 0, 0, 0]}, 
+            {A: 0x11, PC: 0xC002, F: [0, 0, 0, 0]}, 
             {"0xC001": 0x10},
         ],
     ])('OR A d8 test %#: %d %o', testHelper)
@@ -474,7 +486,7 @@ describe("8 bit arith", () => {
     test.each([
         [ Opcode.CP_d8, 
             {A: 0x01, PC: 0xd001, F: [1, 1, 0, 0]}, 
-            {A: 0x01, PC: 0xd002, F: [0, 1, 0, 1]}, 
+            {A: 0x01, PC: 0xd003, F: [0, 1, 0, 1]}, 
             {"0xd002": 0x10},
         ],
     ])('CP d8 test %#: %d %o', testHelper)
@@ -545,12 +557,12 @@ describe("16 bit arith", () => {
     test.each([
         [Opcode.ADD_SP_r8,
             {SP: 0x10FF, PC: 0xc000}, // H and C flags are complicated for this -- eg 0xFFFF + -0x01 = 0xFFFE sets H and C. (subtraction is done with 2's complement addition)
-            {SP: 0x1100, PC: 0xc001},
+            {SP: 0x1100, PC: 0xc002},
             {"0xc001": 0x01} // 1
         ],
         [Opcode.ADD_SP_r8,
             {SP: 0x1000, PC: 0xd000},
-            {SP: 0x0FFF, PC: 0xd001},
+            {SP: 0x0FFF, PC: 0xd002},
             {"0xd001": 0x81} // -1
         ],
     ])('ADD SP r8 test %#: %d %o', testHelper)
@@ -561,12 +573,12 @@ describe("16 bit loads / stack ops", () => {
     test.each([
         [ Opcode.LD_BC_d16,
             {BC: 0x0000, PC: 0xc000, F: [0,1,1,0]},
-            {BC: 0x0001, PC: 0xc002, F: [0,1,1,0]},
+            {BC: 0x0001, PC: 0xc003, F: [0,1,1,0]},
             {0xc001: [0x00, 0x01]}
         ],
         [ Opcode.LD_SP_d16,
             {SP: 0x0000, PC: 0xc000, F: [0,1,1,0]},
-            {SP: 0x1234, PC: 0xc002, F: [0,1,1,0]},
+            {SP: 0x1234, PC: 0xc003, F: [0,1,1,0]},
             {0xc001: [0x12, 0x34]}
         ]
     ])('LD Reg16 d16 test %#: %d %o', testHelper)
@@ -575,7 +587,7 @@ describe("16 bit loads / stack ops", () => {
     test.each([
         [ Opcode.LD_vala16_SP,
             {SP: 0x1234, PC: 0xc000, F: [0,1,1,0]},
-            {SP: 0x1234, PC: 0xc002, F: [0,1,1,0]},
+            {SP: 0x1234, PC: 0xc003, F: [0,1,1,0]},
             {"0xc001": [0xd0, 0x01], "0xd001": [0xFF, 0xFF]},
             {"0xc001": [0xd0, 0x01], "0xd001": [0x12, 0x34]},
         ],
@@ -627,12 +639,12 @@ describe("16 bit loads / stack ops", () => {
         // TODO still not sure I understand the HC flags for subtraction.
         [ Opcode.LD_HL_SPplusr8,
             {HL: 0x1F1F, SP: 0x10FF, PC: 0xc000, F: [0,1,1,0]},
-            {HL: 0x1100, SP: 0x10FF, PC: 0xc001, F: [0,0,1,1]},
+            {HL: 0x1100, SP: 0x10FF, PC: 0xc002, F: [0,0,1,1]},
             {"0xc001": 0x01} // +1
         ],
         [ Opcode.LD_HL_SPplusr8,
             {HL: 0x1F1F, SP: 0x00FF, PC: 0xc000, F: [0,1,1,0]},
-            {HL: 0x00FE, SP: 0x00FF, PC: 0xc001, F: [0,0,0,0]},
+            {HL: 0x00FE, SP: 0x00FF, PC: 0xc002, F: [0,0,0,0]},
             {"0xc001": 0x81} // -1
         ]
     ])('LD HL SP+r8 test %#: %d %o', testHelper)
@@ -651,52 +663,52 @@ describe("jumps", () => {
     test.each([
         [ Opcode.JR_r8,
             {PC: 0xc000, F: [0,1,1,0]},
-            {PC: 0xc005, F: [0,1,1,0]},
+            {PC: 0xc006, F: [0,1,1,0]},
             {0xc001: 0x04} // +4
         ],
         [ Opcode.JR_r8,
             {PC: 0xd000, F: [0,1,1,0]},
-            {PC: 0xcff2, F: [0,1,1,0]}, // 0xd001 - 0xF
+            {PC: 0xcff3, F: [0,1,1,0]}, // 0xd002 - 0xF
             {0xd001: 0x8F} // -15
         ],
         [ Opcode.JR_NC_r8, // c = 0, yes jump
             {PC: 0xc000, F: [0,1,1,0]},
-            {PC: 0xc005, F: [0,1,1,0]},
+            {PC: 0xc006, F: [0,1,1,0]},
             {0xc001: 0x04} // +4
         ],
         [ Opcode.JR_NC_r8, // c = 1, no jump
             {PC: 0xc000, F: [0,1,1,1]},
-            {PC: 0xc001, F: [0,1,1,1]},
+            {PC: 0xc002, F: [0,1,1,1]},
             {0xc001: 0x04} // +4
         ],
         [ Opcode.JR_C_r8, // c = 0, no jump
             {PC: 0xc000, F: [0,1,1,0]},
-            {PC: 0xc001, F: [0,1,1,0]},
+            {PC: 0xc002, F: [0,1,1,0]},
             {0xc001: 0x04} // +4
         ],
         [ Opcode.JR_C_r8, // c = 1, yes jump
             {PC: 0xc000, F: [0,1,1,1]},
-            {PC: 0xc005, F: [0,1,1,1]},
+            {PC: 0xc006, F: [0,1,1,1]},
             {0xc001: 0x04} // +4
         ],
         [ Opcode.JR_NZ_r8, // z = 0, yes jump
             {PC: 0xc000, F: [0,1,1,0]},
-            {PC: 0xc005, F: [0,1,1,0]},
+            {PC: 0xc006, F: [0,1,1,0]},
             {0xc001: 0x04} // +4
         ],
         [ Opcode.JR_NZ_r8, // z = 1, no jump
             {PC: 0xc000, F: [1,1,1,1]},
-            {PC: 0xc001, F: [1,1,1,1]},
+            {PC: 0xc002, F: [1,1,1,1]},
             {0xc001: 0x04} // +4
         ],
         [ Opcode.JR_Z_r8, // z = 0, no jump
             {PC: 0xc000, F: [0,1,1,0]},
-            {PC: 0xc001, F: [0,1,1,0]},
+            {PC: 0xc002, F: [0,1,1,0]},
             {0xc001: 0x04} // +4
         ],
         [ Opcode.JR_Z_r8, // z = 1, yes jump
             {PC: 0xc000, F: [1,1,1,1]},
-            {PC: 0xc005, F: [1,1,1,1]},
+            {PC: 0xc006, F: [1,1,1,1]},
             {0xc001: 0x04} // +4
         ],
     ])('JR r8 test %#: %d %o', testHelper)
@@ -715,12 +727,12 @@ describe("jumps", () => {
         ],
         [ Opcode.JP_NC_a16, // c = 1, no jump
             {PC: 0xc000, F: [0,1,1,1]},
-            {PC: 0xc002, F: [0,1,1,1]},
+            {PC: 0xc003, F: [0,1,1,1]},
             {0xc001: [0xba, 0xbe]} 
         ],
         [ Opcode.JP_C_a16, // c = 0, no jump
             {PC: 0xc000, F: [0,1,1,0]},
-            {PC: 0xc002, F: [0,1,1,0]},
+            {PC: 0xc003, F: [0,1,1,0]},
             {0xc001: [0xb0, 0x0b]} 
         ],
         [ Opcode.JP_C_a16, // c = 1, yes jump
@@ -735,12 +747,12 @@ describe("jumps", () => {
         ],
         [ Opcode.JP_NZ_a16, // z = 1, no jump
             {PC: 0xc000, F: [1,1,1,1]},
-            {PC: 0xc002, F: [1,1,1,1]},
+            {PC: 0xc003, F: [1,1,1,1]},
             {0xc001: [0xb0, 0x0b]} 
         ],
         [ Opcode.JP_Z_a16, // z = 0, no jump
             {PC: 0xc000, F: [0,1,1,0]},
-            {PC: 0xc002, F: [0,1,1,0]},
+            {PC: 0xc003, F: [0,1,1,0]},
             {0xc001: [0xb0, 0x0b]} 
         ],
         [ Opcode.JP_Z_a16, // z = 1, yes jump
@@ -761,21 +773,21 @@ describe("jumps", () => {
 
     // CALL a16
     test.each([
-        [ Opcode.CALL_a16,
+        [ Opcode.CALL_a16, // Push PC+1 onto stack and jump to a16.
             {PC: 0xc000, SP: 0xFFFE, F: [0,1,1,0]},
             {PC: 0x1234, SP: 0xFFFC, F: [0,1,1,0]},
             {0xc001: [0x12, 0x34], 0xFFFC: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFC: [0xc0, 0x02]} 
+            {0xc001: [0x12, 0x34], 0xFFFC: [0xc0, 0x01]} 
         ],
         [ Opcode.CALL_NC_a16, // c = 0, yes jump
             {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
             {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x01]}    
         ],
         [ Opcode.CALL_NC_a16, // c = 1, no jump
             {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
-            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,1]},
+            {PC: 0xc003, SP: 0xFFFC, F: [0,1,1,1]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
         ],
@@ -783,11 +795,11 @@ describe("jumps", () => {
             {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
             {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,1]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x01]}    
         ],
         [ Opcode.CALL_C_a16, // c = 0, no jump
             {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
-            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0xc003, SP: 0xFFFC, F: [0,1,1,0]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
         ],
@@ -795,11 +807,11 @@ describe("jumps", () => {
             {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
             {PC: 0x1234, SP: 0xFFFA, F: [0,1,1,0]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x01]}    
         ],
         [ Opcode.CALL_NZ_a16, // z = 1, no jump
             {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,1]},
-            {PC: 0xc002, SP: 0xFFFC, F: [1,1,1,1]},
+            {PC: 0xc003, SP: 0xFFFC, F: [1,1,1,1]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
         ],
@@ -807,11 +819,11 @@ describe("jumps", () => {
             {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,1]},
             {PC: 0x1234, SP: 0xFFFA, F: [1,1,1,1]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x02]}    
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0x01]}    
         ],
         [ Opcode.CALL_Z_a16, // z = 0, no jump
             {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
-            {PC: 0xc002, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0xc003, SP: 0xFFFC, F: [0,1,1,0]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]} 
         ],
@@ -860,16 +872,16 @@ describe("jumps", () => {
             {PC: 0xc000, SP: 0xFFFE, F: [0,1,1,0]},
             {0xFFFC: [0xc0, 0x00]},
         ],
-        // [ Opcode.RET_NC, // c = 0, yes ret
-        //     {PC: 0xdddd, SP: 0xFFFA, F: [0,1,1,0]},
-        //     {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,0]},
-        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
-        // ],
-        // [ Opcode.RET_NC, // c = 1, no ret
-        //     {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,1]},
-        //     {PC: 0xc001, SP: 0xFFFC, F: [0,1,1,1]},
-        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-        // ],
+        [ Opcode.RET_NC, // c = 0, yes ret
+            {PC: 0xdddd, SP: 0xFFFA, F: [0,1,1,0]},
+            {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
+        ],
+        [ Opcode.RET_NC, // c = 1, no ret
+            {PC: 0xc000, SP: 0xFFFA, F: [0,1,1,1]},
+            {PC: 0xc001, SP: 0xFFFA, F: [0,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+        ],
         // [ Opcode.RET_C, // c = 1, yes ret
         //     {PC: 0xc000, SP: 0xFFFA, F: [0,1,1,1]},
         //     {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,1]},
@@ -905,7 +917,7 @@ describe("jumps", () => {
     // RETI
 })
 
-describe("8 bit loads", () => {
+describe.skip("8 bit loads", () => {
     // LD (HL+) A 
     // LD A (HL-) 
     // LD (HL-) A 

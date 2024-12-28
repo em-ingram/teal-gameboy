@@ -182,13 +182,15 @@ export class CPU {
 
     // reads next byte at PC and advances PC
     nextByte() {
-        return this.mmu.rb(this.PC += 1)
+        const byte = this.mmu.rb(this.PC)
+        this.PC += 1
+        return byte
     }
 
     // reads next word at PC and advances PC
     nextWord() {
-        const word = this.mmu.rw(this.PC += 1)
-        this.PC += 1
+        const word = this.mmu.rw(this.PC)
+        this.PC += 2
         return word
     }
 
@@ -507,33 +509,41 @@ export class CPU {
         this.PC = this.mmu.rw(this.getHL())
     }
 
-    _call = (a16: number) => {
+    // CALL a16
+    // CALL NZ, Z, NC, C
+    call = () => {
+        const a16 = this.mmu.rw(this.PC)
         const sp = this.SP -= 2
         this.mmu.ww(sp, this.PC)
         this.PC = a16
     }
-
-    // CALL a16
-    // CALL NZ, Z, NC, C
-    call = () => {
-        const a16 = this.nextWord()
-        this._call(a16)
-    }
     call_nz = () => {
-        const a16 = this.nextWord()
-        if (!this.F.z) this._call(a16)
+        if (!this.F.z) {
+            this.call()
+        } else {
+            this.PC += 2
+        }
     }
     call_z = () => {
-        const a16 = this.nextWord()
-        if (this.F.z) this._call(a16)
+        if (this.F.z) {
+            this.call()
+        } else {
+            this.PC += 2
+        }
     }
     call_nc = () => {
-        const a16 = this.nextWord()
-        if (!this.F.c) this._call(a16)
+        if (!this.F.c) {
+            this.call()
+        } else {
+            this.PC += 2
+        }
     }
     call_c = () => {
-        const a16 = this.nextWord()
-        if (this.F.c) this._call(a16)
+        if (this.F.c) {
+            this.call()
+        } else {
+            this.PC += 2
+        }
     }
 
     // RET

@@ -1,8 +1,11 @@
 // generated from generate_execute.js at 12/28/2023 3:30:35 AM 
 import { CPU, R8, R16, RSTVector } from "../cpu"
-import { int8 } from "../utils"
 
 export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
+    // Conundrum: when to increment PC?
+    // Hypothesis: PC gets incremented when the instruction is read.
+    // Then nextWord, nextByte behavior can be changed to increment PC AFTER read. Which makes more sense to me anyway.
+    cpu.PC += 1;
     if (!cbprefixed) {
         switch(instr) {
             
