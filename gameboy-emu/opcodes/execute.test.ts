@@ -10,7 +10,7 @@ import { execute } from './execute';
  * [ Opcode.INC_A,                                           <- Opcode to execute
  *   {A: 0x00, B: 0x01, ... HL: 0x00ff, SP: 0xFFF0, PC: 0x0100 },   <- CPU state in
  *   {A: 0x01, B: 0x01, ... HL: 0x00ff, SP: 0xFFF0, PC: 0x0101 },   <- CPU state out
- *   { 0x9f00: 0xff, 0x9f01: [0xfe, 0xfd] },                 <- MMU state in (optional)
+ *   { 0x9f00: 0xff, 0x9f01: [0xfe, 0xfd] },                 <- MMU state in (optional). Opcode will be written to memory location at cpu.PC automatically (default PC=0x0000)
  *   { 0x9f00: 0xff, 0x9f01: [0xfe, 0xfd] },                 <- MMU state out (optional)
  *   false,                                                  <- Whether the opcode is one of the CB-prefixed opcodes.
  * ]
@@ -19,7 +19,14 @@ import { execute } from './execute';
 const testHelper = (opc: Opcode, cpuIn: CPUState, cpuExpected: CPUState, mmuIn: MMUState = {}, mmuExpected: MMUState = {}, cbPrefixed = false) => {
     const mmu = setupMMU(mmuIn)
     const cpu = setupCPU(cpuIn, mmu)
-    execute(cpu, opc, cbPrefixed)
+
+    if (cbPrefixed) {
+        mmu.wb(cpu.PC, 0xcb, true)
+        mmu.wb(cpu.PC+1, opc, true)
+    } else {
+        mmu.wb(cpu.PC, opc, true)
+    }
+    cpu.step()
 
     // test CPU
     const state = dumpState(cpu)
@@ -43,6 +50,62 @@ const testHelper = (opc: Opcode, cpuIn: CPUState, cpuExpected: CPUState, mmuIn: 
         }
     })
 }    
+
+describe("CPU control instructions", () => {
+    // CCF
+    test.each([
+        [ Opcode.CCF,
+            { F: [1,1,1,1] },
+            { F: [1,0,0,0] },
+        ],
+        [ Opcode.CCF,
+            { F: [1,1,1,0] },
+            { F: [1,0,0,1] },
+        ]
+    ])('CCF test %#: %d %o', testHelper)
+    // SCF
+    test.each([
+        [ Opcode.SCF,
+            { F: [1,1,1,1] },
+            { F: [1,0,0,1] },
+        ],
+        [ Opcode.SCF,
+            { F: [1,1,1,0] },
+            { F: [1,0,0,1] },
+        ]
+    ])('CCF test %#: %d %o', testHelper)
+    // NOP
+    test.each([
+        [ Opcode.NOP,
+            { PC: 0x0010 },
+            { PC: 0x0011 }
+        ],
+    ])('NOP test %#: %d %o', testHelper)
+    // HALT
+    // STOP
+    // DI
+    test.each([
+        [ Opcode.DI,
+            { IME: true, scheduledIME: undefined },
+            { IME: true, scheduledIME: false },
+        ],
+        [ Opcode.NOP,
+            { IME: true, scheduledIME: false },
+            { IME: false, scheduledIME: undefined }
+        ]
+    ])('DI test %#: %d %o', testHelper)
+    // EI
+    test.each([
+        [ Opcode.EI,
+            { IME: true, scheduledIME: undefined },
+            { IME: true, scheduledIME: true },
+        ],
+        [ Opcode.NOP,
+            { IME: false, scheduledIME: true },
+            { IME: true, scheduledIME: undefined }
+        ]
+    ])('EI test %#: %d %o', testHelper)
+})
 
 describe("8 bit arith", () => {
     // INC R8 [z0h-]
@@ -882,39 +945,46 @@ describe("jumps", () => {
             {PC: 0xc001, SP: 0xFFFA, F: [0,1,1,1]},
             {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
         ],
-        // [ Opcode.RET_C, // c = 1, yes ret
-        //     {PC: 0xc000, SP: 0xFFFA, F: [0,1,1,1]},
-        //     {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,1]},
-        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
-        // ],
-        // [ Opcode.RET_C, // c = 0, no ret
-        //     {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
-        //     {PC: 0xc001, SP: 0xFFFC, F: [0,1,1,0]},
-        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-        // ],
-        // [ Opcode.RET_NZ, // z = 0, yes ret
-        //     {PC: 0xc000, SP: 0xFFFA, F: [0,1,1,1]},
-        //     {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,1]},
-        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
-        // ],
-        // [ Opcode.RET_NZ, // z = 1, no ret
-        //     {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,0]},
-        //     {PC: 0xc001, SP: 0xFFFC, F: [1,1,1,0]},
-        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-        // ],
-        // [ Opcode.RET_Z, // z = 1, yes ret
-        //     {PC: 0xc000, SP: 0xFFFA, F: [1,1,1,1]},
-        //     {PC: 0xc0ff, SP: 0xFFFC, F: [1,1,1,1]},
-        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
-        // ],
-        // [ Opcode.RET_Z, // z = 0, no ret
-        //     {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
-        //     {PC: 0xc001, SP: 0xFFFC, F: [0,1,1,0]},
-        //     {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
-        // ],
+        [ Opcode.RET_C, // c = 1, yes ret
+            {PC: 0xc000, SP: 0xFFFA, F: [0,1,1,1]},
+            {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
+        ],
+        [ Opcode.RET_C, // c = 0, no ret
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0xc001, SP: 0xFFFC, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+        ],
+        [ Opcode.RET_NZ, // z = 0, yes ret
+            {PC: 0xc000, SP: 0xFFFA, F: [0,1,1,1]},
+            {PC: 0xc0ff, SP: 0xFFFC, F: [0,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
+        ],
+        [ Opcode.RET_NZ, // z = 1, no ret
+            {PC: 0xc000, SP: 0xFFFC, F: [1,1,1,0]},
+            {PC: 0xc001, SP: 0xFFFC, F: [1,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+        ],
+        [ Opcode.RET_Z, // z = 1, yes ret
+            {PC: 0xc000, SP: 0xFFFA, F: [1,1,1,1]},
+            {PC: 0xc0ff, SP: 0xFFFC, F: [1,1,1,1]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xc0, 0xFF]},
+        ],
+        [ Opcode.RET_Z, // z = 0, no ret
+            {PC: 0xc000, SP: 0xFFFC, F: [0,1,1,0]},
+            {PC: 0xc001, SP: 0xFFFC, F: [0,1,1,0]},
+            {0xc001: [0x12, 0x34], 0xFFFA: [0xFF, 0xFF]},
+        ],
     ])('RET a16 test %#: %d %o', testHelper)
 
     // RETI
+    test.each([
+        [ Opcode.RETI,
+            {PC: 0xdddd, SP: 0xFFFC, F: [0,1,1,0], IME: false},
+            {PC: 0xc000, SP: 0xFFFE, F: [0,1,1,0], IME: true},
+            {0xFFFC: [0xc0, 0x00]},
+        ],
+    ])('RETI a16 test %#: %d %o', testHelper)
 })
 
 describe.skip("8 bit loads", () => {
@@ -931,7 +1001,7 @@ describe.skip("8 bit loads", () => {
     // LD A (a16)
 })
 
-// describe("bit shifts", () => {
+describe.skip("bit shifts", () => {
 //     // RLCA [000c]
 //     // RRCA [000c]
 //     // RLA [000c]
@@ -970,4 +1040,4 @@ describe.skip("8 bit loads", () => {
 //     // SET n Reg8 [----]
 //     // SET n (HL) [----]
 
-// })
+})

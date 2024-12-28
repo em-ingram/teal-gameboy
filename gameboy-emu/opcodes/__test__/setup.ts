@@ -9,6 +9,7 @@ export interface MMUState {
 }
 export const setupMMU = (state: MMUState): MMU => {
     const mmu = new MMU()
+    mmu.bootROMEnabled = false
     Object.entries(state).forEach( ([addrString, value]) => {
         const addr = parseInt(addrString)
         if (Array.isArray(value)) {
@@ -30,11 +31,13 @@ export interface CPUState {
 
     AF?: number,
     BC?: number, DE?: number, HL?: number
-    SP?: number, PC?: number
+    SP?: number, PC?: number,
+    IME?: boolean
+    scheduledIME?: boolean | undefined
 }
 export const setupCPU = (state: CPUState, mmu: MMU = new MMU()): CPU => {
     const cpu = new CPU(mmu)
-    const {A, B, C, D, E, H, L, F, AF, BC, DE, HL, SP, PC} = state
+    const {A, B, C, D, E, H, L, F, AF, BC, DE, HL, SP, PC, IME, scheduledIME} = state
     if (A !== undefined) cpu.A = A
     if (B !== undefined) cpu.B = B
     if (C !== undefined) cpu.C = C
@@ -58,11 +61,13 @@ export const setupCPU = (state: CPUState, mmu: MMU = new MMU()): CPU => {
     if (SP !== undefined) cpu.SP = SP
     if (PC !== undefined) cpu.PC = PC
 
+    if (IME !== undefined) cpu.ime = IME
+    if (scheduledIME !== undefined) cpu.scheduledIME = scheduledIME
+
     return cpu
 }
 
-export const dumpState = (cpu: CPU): Required<CPUState> => {
-    // compare cpu to expected CPUState
+export const dumpState = (cpu: CPU): CPUState => {
     return {
         ...cpu,
         F: [
@@ -74,6 +79,10 @@ export const dumpState = (cpu: CPU): Required<CPUState> => {
         AF: cpu.getAF(),
         BC: cpu.getBC(),
         DE: cpu.getDE(),
-        HL: cpu.getHL()
+        HL: cpu.getHL(),
+        SP: cpu.SP,
+        PC: cpu.PC,
+        IME: cpu.ime,
+        scheduledIME: cpu.scheduledIME,
     }
 }

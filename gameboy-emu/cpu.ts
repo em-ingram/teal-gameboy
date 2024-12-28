@@ -72,7 +72,7 @@ export class CPU {
         }
     }
 
-    SP: number = 0
+    SP: number = 0xFFFE
     PC: number = 0
 
     halted: boolean = false
@@ -80,8 +80,8 @@ export class CPU {
 
     jumped: boolean = false // records whether prev instruction was a jump
     
-    imeEnabled: boolean = false; // Interrupt Master Enable
-    imeScheduled: boolean = false; // Set IME on next instruction; used by Ei() command
+    ime: boolean = false; // Interrupt Master Enable
+    scheduledIME: boolean | undefined = undefined; // Value of IME on next instruction; used by EI/DI command
 
     mmu: MMU
 
@@ -197,6 +197,11 @@ export class CPU {
     // executes the next instruction and returns the number of cycles consumed.
     step(): number {
         this.jumped = false
+
+        if (this.scheduledIME !== undefined) {
+            this.ime = this.scheduledIME
+            this.scheduledIME = undefined
+        }
 
         let opcode = this.mmu.rb(this.PC)
         let prefixed = false
@@ -349,9 +354,7 @@ export class CPU {
 
     // LD HL SP+r8 [00hc]
     ld_HL_SPplusr8 = () => {
-        console.debug('DEBUG', this.PC.toString(16))
         const r8 = int8(this.nextByte())
-        console.debug('DEBUG', this.PC.toString(16))
         const sp = this.getSP()
         this.setHL(uint16(sp + r8))
 
@@ -571,7 +574,7 @@ export class CPU {
     // RETI
     // return and enable interrupts (immediately, unlike EI)
     reti = () => {
-        this.imeEnabled = true
+        this.ime = true
         this.ret()
     }
 
@@ -586,14 +589,14 @@ export class CPU {
 
     // IME
     // Enable interrupts after next machine cycle
-    ime = () => {
-        this.imeScheduled = true
+    ei = () => {
+        this.scheduledIME = true
     }
 
     // DI
     // Disable interrupts
     di = () => {
-        this.imeEnabled = false
+        this.scheduledIME = false
     }
 
     // HALT [----]

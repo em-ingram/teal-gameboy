@@ -14,7 +14,8 @@ export class MMU {
     // ---------------------
     // (Bank 0) 0x0000 - 0x3FFF [0x4000 bytes]
     // (Banks 1-NN) 0x4000 - 0x7FFF [0x4000 * 0xFF bytes]
-    gameROMBanks: Uint8Array 
+    gameROM: Uint8Array
+    gameROMBank: number
 
     // (VRAM) 0x8000 - 0x9FFF [0x2000 bytes]
     // ------------------------------
@@ -32,7 +33,8 @@ export class MMU {
     // --------------------------------
     // (Bank 0) 0xC000 - 0xCFFF (Work RAM Bank 0)
     // (Banks 1-NN) 0xD000 - 0xDFFF (Work RAM Bank 1-NN)
-    workRAMBanks: Uint8Array 
+    workRAM: Uint8Array 
+    workRAMBank: number
 
     // 0xE000 - 0xFFFF [0x2000 bytes]
     // ------------------
@@ -49,12 +51,12 @@ export class MMU {
         this.bootROM.set(bootROM)
         this.bootROMEnabled = true
 
-        this.gameROMBanks = new Uint8Array(0x2000 * 0x100)
-        this.gameROMBanks.set(gameROM);
+        this.gameROM = new Uint8Array(0x2000 * 0x100)
+        this.gameROM.set(gameROM);
 
         this.VRAM = new Uint8Array(0x2000)
         this.cartRAM = new Uint8Array(0x2000)
-        this.workRAMBanks = new Uint8Array(0x2000 * 0x100)
+        this.workRAM = new Uint8Array(0x2000 * 0x100)
         this.upperMemory = new Uint8Array(0x2000)
     }
 
@@ -72,19 +74,20 @@ export class MMU {
             return this.upperMemory[addr - this.UPPER_MEMORY_OFFSET]
         } else if (addr >= this.WORK_RAM_OFFSET) {
             // TODO switchable banks
-            return this.workRAMBanks[addr - this.WORK_RAM_OFFSET]
+            return this.workRAM[addr - this.WORK_RAM_OFFSET]
         } else if (addr >= this.CART_RAM_OFFSET) {
             return this.cartRAM[addr - this.CART_RAM_OFFSET]
         } else if (addr >= this.VRAM_OFFSET) {
             return this.VRAM[addr - this.VRAM_OFFSET]
         } else {
-            return this.gameROMBanks[addr]
+            // TODO switchable banks
+            return this.gameROM[addr]
         }
     }
 
-    wb(addr: number, val: number): void {
+    wb(addr: number, val: number, force: boolean = false): void {
         if (addr >= 0xFFFF || addr < 0) {
-            console.warn(`Attempted to write invalid address ${addr}`);
+            throw new Error(`Attempted to write invalid address ${addr}`);
         }
 
         // Writing 1 to 0xFF50 unmaps the boot ROM from the address space.
@@ -96,14 +99,18 @@ export class MMU {
             this.upperMemory[addr - this.UPPER_MEMORY_OFFSET] = val
         } else if (addr >= this.WORK_RAM_OFFSET) {
             // TODO switchable banks
-            this.workRAMBanks[addr - this.WORK_RAM_OFFSET] = val
+            this.workRAM[addr - this.WORK_RAM_OFFSET] = val
         } else if (addr >= this.CART_RAM_OFFSET) {
             this.cartRAM[addr - this.CART_RAM_OFFSET] = val
         } else if (addr >= this.VRAM_OFFSET) {
             this.VRAM[addr - this.VRAM_OFFSET] = val
         } else {
-            // Can't write to ROM
-            console.warn(`Attempted to write to read-only address ${addr}`);
+            if (force) {
+                this.gameROM[addr] = val
+            } else {
+                // Can't write to ROM
+                throw new Error(`Attempted to write to read-only address ${addr}`);
+            }
         }
     }
 
