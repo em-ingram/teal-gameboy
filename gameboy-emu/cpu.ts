@@ -3,12 +3,12 @@ import { execute } from './opcodes/execute'
 import { prefixedOpcodeTable, unprefixedOpcodeTable } from './opcodes/opcodeData'
 
 // 8 bit registers
-export enum R8 {
+export enum Reg8 {
     A, B, C, D, E, H, L
 }
 
 // 16 bit registers
-export enum R16 {
+export enum Reg16 {
     AF, BC, DE, HL, SP
 }
 
@@ -79,47 +79,47 @@ export class CPU {
         this.mmu = mmu
     }
 
-    getR8(reg8: R8): number {
+    getR8(reg8: Reg8): number {
         switch(reg8) {
-            case R8.A: return this.A
-            case R8.B: return this.B
-            case R8.C: return this.C
-            case R8.D: return this.D
-            case R8.E: return this.E
-            case R8.H: return this.H
-            case R8.L: return this.L
+            case Reg8.A: return this.A
+            case Reg8.B: return this.B
+            case Reg8.C: return this.C
+            case Reg8.D: return this.D
+            case Reg8.E: return this.E
+            case Reg8.H: return this.H
+            case Reg8.L: return this.L
         }
     }
 
-    setR8(reg8: R8, val: number) {
+    setR8(reg8: Reg8, val: number) {
         switch(reg8) {
-            case R8.A: this.A = val; return
-            case R8.B: this.B = val; return
-            case R8.C: this.C = val; return
-            case R8.D: this.D = val; return
-            case R8.E: this.E = val; return
-            case R8.H: this.H = val; return
-            case R8.L: this.L = val; return
+            case Reg8.A: this.A = val; return
+            case Reg8.B: this.B = val; return
+            case Reg8.C: this.C = val; return
+            case Reg8.D: this.D = val; return
+            case Reg8.E: this.E = val; return
+            case Reg8.H: this.H = val; return
+            case Reg8.L: this.L = val; return
         }
     }
 
-    getR16(reg16: R16): number {
+    getR16(reg16: Reg16): number {
         switch(reg16) {
-            case R16.AF: return this.getAF()
-            case R16.BC: return this.getBC()
-            case R16.DE: return this.getDE()
-            case R16.HL: return this.getHL()
-            case R16.SP: return this.SP
+            case Reg16.AF: return this.getAF()
+            case Reg16.BC: return this.getBC()
+            case Reg16.DE: return this.getDE()
+            case Reg16.HL: return this.getHL()
+            case Reg16.SP: return this.SP
         }
     }
 
-    setR16(reg16: R16, val: number) {
+    setR16(reg16: Reg16, val: number) {
         switch(reg16) {
-            case R16.AF: this.setAF(val); return
-            case R16.BC: this.setBC(val); return
-            case R16.DE: this.setDE(val); return
-            case R16.HL: this.setHL(val); return
-            case R16.SP: this.SP = val; return
+            case Reg16.AF: this.setAF(val); return
+            case Reg16.BC: this.setBC(val); return
+            case Reg16.DE: this.setDE(val); return
+            case Reg16.HL: this.setHL(val); return
+            case Reg16.SP: this.SP = val; return
         }
     }
 

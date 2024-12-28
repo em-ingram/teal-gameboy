@@ -1,4 +1,4 @@
-import { CPU, R16, R8, RSTVector} from '../cpu';
+import { CPU, Reg16, Reg8, RSTVector} from '../cpu';
 import {
     uint8,
     uint16,
@@ -13,12 +13,12 @@ import {
 
 
 // INC r16 [----]
-export const inc_reg16 = (cpu: CPU, reg16: R16) => {
+export const inc_reg16 = (cpu: CPU, reg16: Reg16) => {
     cpu.setR16(reg16, uint16(cpu.getR16(reg16) + 1))
 }
 
 // INC reg8 [z0h-]
-export const inc_reg8 = (cpu: CPU, reg8: R8) => {
+export const inc_reg8 = (cpu: CPU, reg8: Reg8) => {
     const val = cpu.getR8(reg8)
     const newVal = uint8(val + 1)
     cpu.setR8(reg8, newVal)
@@ -30,7 +30,7 @@ export const inc_reg8 = (cpu: CPU, reg8: R8) => {
 }
 
 // DEC reg8 [z1h-]
-export const dec_reg8 = (cpu: CPU, reg8: R8) => {
+export const dec_reg8 = (cpu: CPU, reg8: Reg8) => {
     const val = cpu.getR8(reg8)
     const newVal = uint8(val - 1)
     cpu.setR8(reg8, newVal)
@@ -88,7 +88,7 @@ export const rrca = (cpu: CPU) => {
 }
 
 // ADD HL reg16 [-0hc]
-export const add_HL_reg16 = (cpu: CPU, reg16: R16) => {
+export const add_HL_reg16 = (cpu: CPU, reg16: Reg16) => {
     const val = cpu.getR16(reg16)
     const hl = cpu.getHL()
     const newVal = uint16(hl+ val)
@@ -101,7 +101,7 @@ export const add_HL_reg16 = (cpu: CPU, reg16: R16) => {
 }
 
 // DEC r16 [----]
-export const dec_reg16 = (cpu: CPU, reg16: R16) => {
+export const dec_reg16 = (cpu: CPU, reg16: Reg16) => {
     cpu.setR16(reg16, uint16(cpu.getR16(reg16) - 1))
 }
 
@@ -562,23 +562,23 @@ export const add_SP_r8 = (cpu: CPU) => {
 }
 
 // PUSH Reg16
-export const push = (cpu: CPU, reg16: R16) => {
+export const push = (cpu: CPU, reg16: Reg16) => {
     cpu.mmu.ww(cpu.SP-=2, cpu.getR16(reg16))
 }
 
 // POP Reg16
-export const pop = (cpu: CPU, reg16: R16) => {
+export const pop = (cpu: CPU, reg16: Reg16) => {
     cpu.setR16(reg16, cpu.mmu.rw(cpu.SP))
     cpu.SP += 2
 }
 
 // POP AF [znhc]
-export const pop_AF = (cpu: CPU) => pop(cpu, R16.AF)
+export const pop_AF = (cpu: CPU) => pop(cpu, Reg16.AF)
 
 // PUSH AF 
-export const push_AF = (cpu: CPU) => push(cpu, R16.AF)
+export const push_AF = (cpu: CPU) => push(cpu, Reg16.AF)
 
-export const rlc_r8 = (cpu: CPU, reg8: R8) => {
+export const rlc_r8 = (cpu: CPU, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -586,7 +586,7 @@ export const rlc_valHL = (cpu: CPU) => {
     throw new Error('Function not implemented.');
 }
 
-export const rrc_r8 = (cpu: CPU, reg8: R8) => {
+export const rrc_r8 = (cpu: CPU, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -594,7 +594,7 @@ export const rrc_valHL = (cpu: CPU) => {
     throw new Error('Function not implemented.');
 }
 
-export const rl_r8 = (cpu: CPU, reg8: R8) => {
+export const rl_r8 = (cpu: CPU, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -602,7 +602,7 @@ export const rl_valHL = (cpu: CPU) => {
     throw new Error('Function not implemented.');
 }
 
-export const rr_r8 = (cpu: CPU, reg8: R8) => {
+export const rr_r8 = (cpu: CPU, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -610,7 +610,7 @@ export const rr_valHL = (cpu: CPU) => {
     throw new Error('Function not implemented.');
 }
 
-export const sla_r8 = (cpu: CPU, reg8: R8) => {
+export const sla_r8 = (cpu: CPU, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -618,7 +618,7 @@ export const sla_valHL = (cpu: CPU) => {
     throw new Error('Function not implemented.');
 }
 
-export const sra_r8 = (cpu: CPU, reg8: R8) => {
+export const sra_r8 = (cpu: CPU, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -626,7 +626,7 @@ export const sra_valHL = (cpu: CPU) => {
     throw new Error('Function not implemented.');
 }
 
-export const swap_r8 = (cpu: CPU, reg8: R8) => {
+export const swap_r8 = (cpu: CPU, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -634,7 +634,7 @@ export const swap_valHL = (cpu: CPU) => {
     throw new Error('Function not implemented.');
 }
 
-export const srl_r8 = (cpu: CPU, reg8: R8) => {
+export const srl_r8 = (cpu: CPU, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -642,7 +642,7 @@ export const srl_valHL = (cpu: CPU) => {
     throw new Error('Function not implemented.');
 }
 
-export const bit_n_r8 = (cpu: CPU, n: number, reg8: R8) => {
+export const bit_n_r8 = (cpu: CPU, n: number, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -650,7 +650,7 @@ export const bit_n_valHL = (cpu: CPU, n: number) => {
     throw new Error('Function not implemented.');
 }
 
-export const res_n_r8 = (cpu: CPU, n: number, reg8: R8) => {
+export const res_n_r8 = (cpu: CPU, n: number, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
@@ -658,7 +658,7 @@ export const res_n_valHL = (cpu: CPU, n: number) => {
     throw new Error('Function not implemented.');
 }
 
-export const set_n_r8 = (cpu: CPU, n: number, reg8: R8) => {
+export const set_n_r8 = (cpu: CPU, n: number, reg8: Reg8) => {
     throw new Error('Function not implemented.');
 }
 
