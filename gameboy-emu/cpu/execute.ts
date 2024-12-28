@@ -1,5 +1,4 @@
-import { i } from 'vitest/dist/reporters-yx5ZTtEV.js';
-import { CPU, Reg8, Reg16, RSTVector } from '../cpu'
+import { CPU, Reg8, Reg16, RSTVector } from './cpu'
 
 import { adc, add, add_HL_reg16, add_SP_r8, and, bit_n_r8, bit_n_valHL, call, call_c, call_nc, call_nz, call_z, ccf, cp, cpl, daa, dec_reg16, dec_reg8, dec_valHL, di, ei, halt, inc_reg16, inc_reg8, inc_valHL, jp, jp_c, jp_nc, jp_nz, jp_valHL, jp_z, jr, jr_c, jr_nc, jr_nz, jr_z, ld_A_vala16, ld_A_valC, ld_A_valHLminus, ld_A_valHLplus, ld_HL_SPplusr8, ld_vala16_A, ld_valC_A, ld_valHLminus_A, ld_valHLplus_A, ldh_A_vala8, ldh_vala8_A, or, pop, pop_AF, push, push_AF, res_n_r8, res_n_valHL, ret, reti, rl_r8, rl_valHL, rla, rlc_r8, rlc_valHL, rlca, rr_r8, rr_valHL, rra, rrc_r8, rrc_valHL, rrca, rst, sbc, scf, set_n_r8, set_n_valHL, sla_r8, sla_valHL, sra_r8, sra_valHL, srl_r8, srl_valHL, stop, sub, swap_r8, swap_valHL, xor} from './execute-helpers';
 
@@ -11,10 +10,10 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
             // 0x0
 
             case 0x0: // NOP   [----]
-                // nothin doin boss
+                // nothin'
                 break
             case 0x1: // LD BC d16 [----]
-                cpu.setBC(cpu.nextWord())
+                cpu.setBC(cpu.advanceNextWord())
                 break
             case 0x2: // LD (BC) A [----]
                 cpu.mmu.wb(cpu.getBC(), cpu.A)
@@ -29,14 +28,14 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 dec_reg8(cpu, Reg8.B)
                 break
             case 0x6: // LD B d8 [----]
-                cpu.B = cpu.nextByte()
+                cpu.B = cpu.advanceNextByte()
                 break
             case 0x7: // RLCA   [000C]
                 rlca(cpu)
                 break
 
             case 0x8: // LD (a16) SP [----]
-                cpu.mmu.ww(cpu.nextWord(), cpu.SP)
+                cpu.mmu.ww(cpu.advanceNextWord(), cpu.SP)
                 break
             case 0x9: // ADD HL BC [-0HC]
                 add_HL_reg16(cpu, Reg16.BC)
@@ -54,7 +53,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 dec_reg8(cpu, Reg8.C)
                 break
             case 0xe: // LD C d8 [----]
-                cpu.C = cpu.nextByte()
+                cpu.C = cpu.advanceNextByte()
                 break
             case 0xf: // RRCA   [000C]
                 rrca(cpu)
@@ -66,7 +65,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 stop(cpu)
                 break
             case 0x11: // LD DE d16 [----]
-                cpu.setDE(cpu.nextWord())
+                cpu.setDE(cpu.advanceNextWord())
                 break
             case 0x12: // LD (DE) A [----]
                 cpu.mmu.wb(cpu.getDE(), cpu.A)
@@ -81,7 +80,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 dec_reg8(cpu, Reg8.D)
                 break
             case 0x16: // LD D d8 [----]
-                cpu.D = cpu.nextByte()
+                cpu.D = cpu.advanceNextByte()
                 break
             case 0x17: // RLA   [000C]
                 rla(cpu)
@@ -106,7 +105,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 dec_reg8(cpu, Reg8.E)
                 break
             case 0x1e: // LD E d8 [----]
-                cpu.E = cpu.nextByte()
+                cpu.E = cpu.advanceNextByte()
                 break
             case 0x1f: // RRA   [000C]
                 rra(cpu)
@@ -118,7 +117,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 jr_nz(cpu)
                 break
             case 0x21: // LD HL d16 [----]
-                cpu.setHL(cpu.nextWord())
+                cpu.setHL(cpu.advanceNextWord())
                 break
             case 0x22: // LD (HL+) A [----]
                 ld_valHLplus_A(cpu)
@@ -133,7 +132,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 dec_reg8(cpu, Reg8.H)
                 break
             case 0x26: // LD H d8 [----]
-                cpu.H = cpu.nextByte()
+                cpu.H = cpu.advanceNextByte()
                 break
             case 0x27: // DAA   [Z-0C]
                 daa(cpu)
@@ -158,7 +157,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 dec_reg8(cpu, Reg8.L)
                 break
             case 0x2e: // LD L d8 [----]
-                cpu.L = cpu.nextByte()
+                cpu.L = cpu.advanceNextByte()
                 break
             case 0x2f: // CPL   [-11-]
                 cpl(cpu)
@@ -170,7 +169,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 jr_nc(cpu)
                 break
             case 0x31: // LD SP d16 [----]
-                cpu.setSP(cpu.nextWord())
+                cpu.setSP(cpu.advanceNextWord())
                 break
             case 0x32: // LD (HL-) A [----]
                 ld_valHLminus_A(cpu)
@@ -185,7 +184,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 dec_valHL(cpu)
                 break
             case 0x36: // LD (HL) d8 [----]
-                cpu.mmu.wb(cpu.getHL(), cpu.nextByte())
+                cpu.mmu.wb(cpu.getHL(), cpu.advanceNextByte())
                 break
             case 0x37: // SCF   [-001]
                 scf(cpu)
@@ -210,7 +209,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 dec_reg8(cpu, Reg8.A)
                 break
             case 0x3e: // LD A d8 [----]
-                cpu.A = cpu.nextByte()
+                cpu.A = cpu.advanceNextByte()
                 break
             case 0x3f: // CCF   [-00C]
                 ccf(cpu)
@@ -653,7 +652,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 push(cpu, Reg16.BC)
                 break
             case 0xc6: // ADD A d8 [Z0HC]
-                add(cpu, cpu.nextByte())
+                add(cpu, cpu.advanceNextByte())
                 break
             case 0xc7: // RST 00H  [----]
                 rst(cpu, RSTVector.$00)
@@ -678,7 +677,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 call(cpu)
                 break
             case 0xce: // ADC A d8 [Z0HC]
-                adc(cpu, cpu.nextByte())
+                adc(cpu, cpu.advanceNextByte())
                 break
             case 0xcf: // RST 08H  [----]
                 rst(cpu, RSTVector.$08)
@@ -702,7 +701,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 push(cpu, Reg16.DE)
                 break
             case 0xd6: // SUB d8  [Z1HC]
-                sub(cpu, cpu.nextByte())
+                sub(cpu, cpu.advanceNextByte())
                 break
             case 0xd7: // RST 10H  [----]
                 rst(cpu, RSTVector.$10)
@@ -721,7 +720,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 call_c(cpu)
                 break
             case 0xde: // SBC A d8 [Z1HC]
-                sbc(cpu, cpu.nextByte())
+                sbc(cpu, cpu.advanceNextByte())
                 break
             case 0xdf: // RST 18H  [----]
                 rst(cpu, RSTVector.$18)
@@ -742,7 +741,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 push(cpu, Reg16.HL)
                 break
             case 0xe6: // AND d8  [Z010]
-                and(cpu, cpu.nextByte())
+                and(cpu, cpu.advanceNextByte())
                 break
             case 0xe7: // RST 20H  [----]
                 rst(cpu, RSTVector.$20)
@@ -758,7 +757,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 ld_vala16_A(cpu)
                 break
             case 0xee: // XOR d8  [Z000]
-                xor(cpu, cpu.nextByte())
+                xor(cpu, cpu.advanceNextByte())
                 break
             case 0xef: // RST 28H  [----]
                 rst(cpu, RSTVector.$28)
@@ -782,7 +781,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 push_AF(cpu)
                 break
             case 0xf6: // OR d8  [Z000]
-                or(cpu, cpu.nextByte())
+                or(cpu, cpu.advanceNextByte())
                 break
             case 0xf7: // RST 30H  [----]
                 rst(cpu, RSTVector.$30)
@@ -801,7 +800,7 @@ export const execute = (cpu: CPU, instr: number, cbprefixed: boolean) => {
                 ei(cpu)
                 break
             case 0xfe: // CP d8  [Z1HC]
-                cp(cpu, cpu.nextByte())
+                cp(cpu, cpu.advanceNextByte())
                 break
             case 0xff: // RST 38H  [----]
                 rst(cpu, RSTVector.$38)

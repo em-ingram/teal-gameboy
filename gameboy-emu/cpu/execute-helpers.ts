@@ -1,4 +1,4 @@
-import { CPU, Reg16, Reg8, RSTVector} from '../cpu';
+import { CPU, Reg16, Reg8, RSTVector} from './cpu';
 import {
     uint8,
     uint16,
@@ -139,7 +139,7 @@ export const ld_A_valHLplus = (cpu: CPU) => {
 
 // LD HL SP+r8 [00hc]
 export const ld_HL_SPplusr8 = (cpu: CPU) => {
-    const r8 = int8(cpu.nextByte())
+    const r8 = int8(cpu.advanceNextByte())
     const sp = cpu.getSP()
     cpu.setHL(uint16(sp + r8))
 
@@ -151,12 +151,12 @@ export const ld_HL_SPplusr8 = (cpu: CPU) => {
 
 // LDH (a8) A
 export const ldh_vala8_A = (cpu: CPU) => {
-    cpu.mmu.wb(0xFF00 + cpu.nextByte(), cpu.A)
+    cpu.mmu.wb(0xFF00 + cpu.advanceNextByte(), cpu.A)
 }
 
 // LDH A (a8)
 export const ldh_A_vala8 = (cpu: CPU) => {
-    cpu.A = cpu.mmu.rb(0xFF00 + cpu.nextByte())
+    cpu.A = cpu.mmu.rb(0xFF00 + cpu.advanceNextByte())
 } 
 
 // LD (C) A
@@ -171,12 +171,12 @@ export const ld_A_valC = (cpu: CPU) => {
 
 // LD (a16) A
 export const ld_vala16_A = (cpu: CPU) => {
-    cpu.mmu.ww(cpu.nextWord(), cpu.A)
+    cpu.mmu.ww(cpu.advanceNextWord(), cpu.A)
 } 
 
 // LD A (a16)
 export const ld_A_vala16 = (cpu: CPU) => {
-    cpu.A = cpu.mmu.rw(cpu.nextWord())
+    cpu.A = cpu.mmu.rw(cpu.advanceNextWord())
 }
 
 // INC (HL) [z0h-]
@@ -245,7 +245,7 @@ export const _jr = (cpu: CPU, r8: number) => {
 // JR r8 [----]
 // relative jump to PC +/- r8 (int8)
 export const jr = (cpu: CPU) => {
-    const r8 = int8(cpu.nextByte())
+    const r8 = int8(cpu.advanceNextByte())
     _jr(cpu, r8)
 }
 // JR NZ r8 [----]
@@ -254,41 +254,41 @@ export const jr = (cpu: CPU) => {
 // JR C r8 [----]
 // conditional relative jump to PC +/- r8 if Z/C flag is/isn't set
 export const jr_nz = (cpu: CPU) => {
-    const r8 = int8(cpu.nextByte())
+    const r8 = int8(cpu.advanceNextByte())
     if (!cpu.F.z) _jr(cpu, r8) 
 }
 export const jr_z = (cpu: CPU) => {
-    const r8 = int8(cpu.nextByte())
+    const r8 = int8(cpu.advanceNextByte())
     if (cpu.F.z) _jr(cpu, r8) 
 }
 export const jr_nc = (cpu: CPU) => {
-    const r8 = int8(cpu.nextByte())
+    const r8 = int8(cpu.advanceNextByte())
     if (!cpu.F.c) _jr(cpu, r8) 
 }
 export const jr_c = (cpu: CPU) => {
-    const r8 = int8(cpu.nextByte())
+    const r8 = int8(cpu.advanceNextByte())
     if (cpu.F.c) _jr(cpu, r8) 
 }
 
 // JP a16
 export const jp = (cpu: CPU) => {
-    const a16 = cpu.nextWord()
+    const a16 = cpu.advanceNextWord()
     cpu.PC = a16
 }
 export const jp_nz = (cpu: CPU) => {
-    const a16 = cpu.nextWord()
+    const a16 = cpu.advanceNextWord()
     if (!cpu.F.z) cpu.PC = a16
 }
 export const jp_z = (cpu: CPU) => {
-    const a16 = cpu.nextWord()
+    const a16 = cpu.advanceNextWord()
     if (cpu.F.z) cpu.PC = a16
 }
 export const jp_nc = (cpu: CPU) => {
-    const a16 = cpu.nextWord()
+    const a16 = cpu.advanceNextWord()
     if (!cpu.F.c) cpu.PC = a16
 }
 export const jp_c = (cpu: CPU) => {
-    const a16 = cpu.nextWord()
+    const a16 = cpu.advanceNextWord()
     if (cpu.F.c) cpu.PC = a16
 }
 
@@ -393,7 +393,7 @@ export const halt = (cpu: CPU) => {
 // STOP [----]
 export const stop = (cpu: CPU) => {
     // read and discard next byte
-    cpu.nextByte()
+    cpu.advanceNextByte()
     cpu.stopped = true
 }
 
@@ -550,7 +550,7 @@ export const ccf = (cpu: CPU) => {
 
 // ADD SP r8 [00hc]
 export const add_SP_r8 = (cpu: CPU) => {
-    const r8 = int8(cpu.nextByte())
+    const r8 = int8(cpu.advanceNextByte())
     const sp = cpu.SP
     cpu.SP = uint16(sp + r8)
     

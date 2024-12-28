@@ -1,6 +1,6 @@
-import { MMU } from './mmu'
-import { execute } from './opcodes/execute'
-import { prefixedOpcodeTable, unprefixedOpcodeTable } from './opcodes/opcodeData'
+import { MMU } from '../mmu'
+import { execute } from './execute'
+import { prefixedOpcodeTable, unprefixedOpcodeTable } from '../opcodes/opcodeData'
 
 // 8 bit registers
 export enum Reg8 {
@@ -171,14 +171,14 @@ export class CPU {
     }
 
     // reads next byte at PC and advances PC
-    nextByte() {
+    advanceNextByte() {
         const byte = this.mmu.rb(this.PC)
         this.PC += 1
         return byte
     }
 
     // reads next word at PC and advances PC
-    nextWord() {
+    advanceNextWord() {
         const word = this.mmu.rw(this.PC)
         this.PC += 2
         return word

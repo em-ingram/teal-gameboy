@@ -1,8 +1,7 @@
 import { describe, test, expect } from 'vitest';
 
 import { setupCPU, setupMMU, dumpState, CPUState, MMUState } from './__test__/setup';
-import { Opcode } from './opcodes';
-import { execute } from './execute';
+import { Opcode } from '../opcodes/opcodes';
 
 /**
  * Test Format:
@@ -10,9 +9,9 @@ import { execute } from './execute';
  * [ Opcode.INC_A,                                           <- Opcode to execute
  *   {A: 0x00, B: 0x01, ... HL: 0x00ff, SP: 0xFFF0, PC: 0x0100 },   <- CPU state in
  *   {A: 0x01, B: 0x01, ... HL: 0x00ff, SP: 0xFFF0, PC: 0x0101 },   <- CPU state out
- *   { 0x9f00: 0xff, 0x9f01: [0xfe, 0xfd] },                 <- MMU state in (optional). Opcode will be written to memory location at cpu.PC automatically (default PC=0x0000)
+ *   { 0x9f00: 0xff, 0x9f01: [0xfe, 0xfd] },                 <- MMU state in (optional). Opcode will be written to memory at PC automatically (default PC=0x0000)
  *   { 0x9f00: 0xff, 0x9f01: [0xfe, 0xfd] },                 <- MMU state out (optional)
- *   false,                                                  <- Whether the opcode is one of the CB-prefixed opcodes.
+ *   false,                                                  <- Whether the opcode is one of the CB-prefixed opcodes. (optional)
  * ]
  */ 
 

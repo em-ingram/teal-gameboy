@@ -1,4 +1,4 @@
-import { CPU } from "../../cpu"
+import { CPU } from "../cpu"
 import { MMU } from "../../mmu"
 
 // usage:
