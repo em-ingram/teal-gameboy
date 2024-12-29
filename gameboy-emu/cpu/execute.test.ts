@@ -1054,12 +1054,12 @@ describe("bit shifts", () => {
     test.each([
         [ Opcode.RLC_B,
             {B: 0x80 /* 0b1000_0000 */, F: [0,1,1,1]},
-            {B: 0x01 /* 0b0000_0001 */, F: [1,0,0,1]},
+            {B: 0x01 /* 0b0000_0001 */, F: [0,0,0,1]},
             {}, {}, true
         ],
         [ Opcode.RLC_D,
             {D: 0x40 /* 0b0100_0000 */, F: [1,0,1,1]},
-            {D: 0x80 /* 0b1000_0000 */, F: [1,0,0,0]},
+            {D: 0x80 /* 0b1000_0000 */, F: [0,0,0,0]},
             {}, {}, true
         ],
     ])('RLC Reg8 test %#: %d %o', testHelper)
@@ -1068,14 +1068,14 @@ describe("bit shifts", () => {
     test.each([
         [ Opcode.RLC_valHL,
             {H: 0xD0, L: 0x00, F: [0,1,1,1]},
-            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {H: 0xD0, L: 0x00, F: [0,0,0,1]},
             {0xD000: 0x80 /* 0b1000_0000 */ }, 
             {0xD000: 0x01/* 0b0000_0001 */ }, 
             true
         ],
         [ Opcode.RLC_valHL,
-            {H: 0xD0, L: 0x00, F: [1,0,1,1]},
-            {H: 0xD0, L: 0x00, F: [1,0,0,0]},
+            {H: 0xD0, L: 0x00, F: [0,0,1,1]},
+            {H: 0xD0, L: 0x00, F: [0,0,0,0]},
             {0xD000: 0x40 /* 0b0100_0000 */ }, 
             {0xD000: 0x80/* 0b1000_0000 */ }, 
             true
@@ -1086,12 +1086,12 @@ describe("bit shifts", () => {
     test.each([
         [ Opcode.RRC_C,
             {C: 0x01 /* 0b0000_0001 */, F: [0,1,1,1]},
-            {C: 0x80 /* 0b1000_0000 */, F: [1,0,0,1]},
+            {C: 0x80 /* 0b1000_0000 */, F: [0,0,0,1]},
             {}, {}, true
         ],
         [ Opcode.RRC_E,
-            {E: 0x02 /* 0b0000_0010 */, F: [1,0,1,1]},
-            {E: 0x01 /* 0b0000_0001 */, F: [1,0,0,0]},
+            {E: 0x02 /* 0b0000_0010 */, F: [0,0,1,1]},
+            {E: 0x01 /* 0b0000_0001 */, F: [0,0,0,0]},
             {}, {}, true
         ],
     ])('RRCA test %#: %d %o', testHelper)
@@ -1100,7 +1100,7 @@ describe("bit shifts", () => {
     test.each([
         [ Opcode.RRC_valHL,
             {H: 0xD0, L: 0x00, F: [0,1,1,1]},
-            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {H: 0xD0, L: 0x00, F: [0,0,0,1]},
             {0xD000: 0x01}, 
             {0xD000: 0x80}, 
             true
@@ -1116,7 +1116,7 @@ describe("bit shifts", () => {
         ],
         [ Opcode.RL_L,
             {L: 0x40 /* 0b0100_0000 */, F: [1,0,1,1]},
-            {L: 0x81 /* 0b1000_0001 */, F: [1,0,0,0]},
+            {L: 0x81 /* 0b1000_0001 */, F: [0,0,0,0]},
             {}, {}, true
         ],
     ])('RL Reg8 test %#: %d %o', testHelper)
@@ -1141,7 +1141,7 @@ describe("bit shifts", () => {
         ],
         [ Opcode.RR_C,
             {C: 0x01 /* 0b0000_0001 */, F: [1,0,1,1]},
-            {C: 0x80 /* 0b1000_0000 */, F: [1,0,0,1]},
+            {C: 0x80 /* 0b1000_0000 */, F: [0,0,0,1]},
             {}, {}, true
         ],
     ])('RR Reg8 test %#: %d %o', testHelper)
@@ -1161,7 +1161,7 @@ describe("bit shifts", () => {
     test.each([
         [ Opcode.SLA_B,
             {B: 0x81, F: [0,1,1,0]},
-            {B: 0x02, F: [1,0,0,1]},
+            {B: 0x02, F: [0,0,0,1]},
             {},
             {}, 
             true
@@ -1172,7 +1172,7 @@ describe("bit shifts", () => {
     test.each([
         [ Opcode.SLA_valHL,
             {H: 0xD0, L: 0x00, F: [0,1,1,0]},
-            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
+            {H: 0xD0, L: 0x00, F: [0,0,0,1]},
             {0xD000: 0x81},
             {0xD000: 0x02}, 
             true
@@ -1183,39 +1183,65 @@ describe("bit shifts", () => {
     test.each([
         [ Opcode.SRA_B,
             {B: 0x03, F: [0,1,1,0]},
-            {B: 0x01, F: [1,0,0,1]},
+            {B: 0x01, F: [0,0,0,1]},
             {},
             {}, 
             true
         ],
         [ Opcode.SRA_H,
             {H: 0xF3 /* 0b1111_0010 */, F: [0,1,1,0]},
-            {H: 0xF9 /* 0b1111_1001 */, F: [1,0,0,1]},
+            {H: 0xF9 /* 0b1111_1001 */, F: [0,0,0,1]},
             {},
             {}, 
             true
         ],
     ])('SRA Reg8 test %#: %d %o', testHelper)
 
-    // CB SRA (HL) [z000]
+    // CB SRA (HL) [z00c]
     test.each([
         [ Opcode.SRA_valHL,
             {H: 0xD0, L: 0x00, F: [0,1,1,0]},
-            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
-            {0xD000: 0x83 /* 0b1000_0010 */},
+            {H: 0xD0, L: 0x00, F: [0,0,0,0]},
+            {0xD000: 0x82 /* 0b1000_0010 */},
             {0xD000: 0xc1} /* 0b1100_0001 */, 
             true
         ],
     ])('SRA valHL test %#: %d %o', testHelper)
 
     // CB SWAP Reg8 [z000]
+    test.each([
+        [ Opcode.SWAP_A,
+            {A: 0x00, F: [1,0,0,1]},
+            {A: 0x00, F: [1,0,0,0]},
+            {},
+            {}, 
+            true
+        ],
+        [ Opcode.SWAP_B,
+            {B: 0xF0, F: [1,0,0,1]},
+            {B: 0x0F, F: [0,0,0,0]},
+            {},
+            {}, 
+            true
+        ],
+    ])('SWAP Reg8 test %#: %d %o', testHelper)
+
     // CB SWAP (HL) [z000]
+    test.each([
+        [ Opcode.SWAP_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [0,0,0,0]},
+            {0xD000: 0x83 },
+            {0xD000: 0x38 },
+            true
+        ],
+    ])('SRA valHL test %#: %d %o', testHelper)
 
     // CB SRL Reg8 [z00c]
     test.each([
         [ Opcode.SRL_H,
-            {H: 0xF4 /* 0b1111_0011 */, F: [0,1,1,0]},
-            {H: 0x79 /* 0b0111_1001 */, F: [1,0,0,1]},
+            {H: 0xF3 /* 0b1111_0011 */, F: [0,1,1,0]},
+            {H: 0x79 /* 0b0111_1001 */, F: [0,0,0,1]},
             {},
             {}, 
             true
@@ -1226,20 +1252,112 @@ describe("bit shifts", () => {
     test.each([
         [ Opcode.SRL_valHL,
             {H: 0xD0, L: 0x00, F: [0,1,1,0]},
-            {H: 0xD0, L: 0x00, F: [1,0,0,1]},
-            {0xD000: 0x83 /* 0b1000_0010 */},
-            {0xD000: 0xa1} /* 0b0100_0001 */, 
+            {H: 0xD0, L: 0x00, F: [0,0,0,0]},
+            {0xD000: 0x82 /* 0b1000_0010 */},
+            {0xD000: 0x41} /* 0b0100_0001 */, 
             true
         ],
     ])('SRL valHL test %#: %d %o', testHelper)
 
     // BIT n Reg8 [z01-]
+    test.each([
+        [ Opcode.BIT_0_A,
+            {A: 0x00, F: [0,1,1,0]},
+            {A: 0x00,  F: [1,0,1,0]},
+            {},
+            {}, 
+            true
+        ],
+        [ Opcode.BIT_7_L,
+            {L: 0x80, F: [1,1,1,1]},
+            {L: 0x80,  F: [0,0,1,1]},
+            {},
+            {}, 
+            true
+        ],
+    ])('BIT n Reg8 test %#: %d %o', testHelper)
+
     // BIT n (HL) [z01-]
+    test.each([
+        [ Opcode.BIT_6_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [0,0,1,0]},
+            {0xD000: 0x40 /* 0b0100_0010 */},
+            {0xD000: 0x40},
+            true
+        ],
+    ])('BIT n (HL) test %#: %d %o', testHelper)
 
     // RES n Reg8 [----]
+    test.each([
+        [ Opcode.RES_0_A,
+            {A: 0x0F /* 0b0000_1111 */, F: [0,1,1,0]},
+            {A: 0x0E /* 0b0000_1110 */, F: [0,1,1,0]},
+            {},
+            {}, 
+            true
+        ],
+        [ Opcode.RES_3_D,
+            {D: 0x0F /* 0b0000_1111 */, F: [0,1,1,0]},
+            {D: 0x07 /* 0b0000_0111 */, F: [0,1,1,0]},
+            {},
+            {}, 
+            true
+        ],
+    ])('RES n Reg8 test %#: %d %o', testHelper)
+
     // RES n (HL) [----]
+    test.each([
+        [ Opcode.RES_6_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {0xD000: 0x40 /* 0b0100_0010 */},
+            {0xD000: 0x00},
+            true
+        ],
+    ])('RES n (HL) test %#: %d %o', testHelper)
 
     // SET n Reg8 [----]
+    test.each([
+        [ Opcode.SET_0_A,
+            {A: 0x0E /* 0b0000_1110 */, F: [0,1,1,0]},
+            {A: 0x0F /* 0b0000_1111 */, F: [0,1,1,0]},
+            {},
+            {}, 
+            true
+        ],
+        [ Opcode.SET_3_D,
+            {D: 0x07 /* 0b0000_0111 */, F: [0,1,1,0]},
+            {D: 0x0F /* 0b0000_1111 */, F: [0,1,1,0]},
+            {},
+            {}, 
+            true
+        ],
+        [ Opcode.SET_5_E,
+            {E: 0x40 /* 0b0100_0000 */, F: [0,1,1,0]},
+            {E: 0x60 /* 0b0110_0000 */, F: [0,1,1,0]},
+            {},
+            {}, 
+            true
+        ],
+    ])('SET n Reg8 test %#: %d %o', testHelper)
+
     // SET n (HL) [----]
+    test.each([
+        [ Opcode.SET_6_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {0xD000: 0x00},
+            {0xD000: 0x40 /* 0b0100_0000 */},
+            true
+        ],
+        [ Opcode.SET_5_valHL,
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {H: 0xD0, L: 0x00, F: [0,1,1,0]},
+            {0xD000: 0x40},
+            {0xD000: 0x60 /* 0b0110_0000 */},
+            true
+        ],
+    ])('SET n (HL) test %#: %d %o', testHelper)
 
 })

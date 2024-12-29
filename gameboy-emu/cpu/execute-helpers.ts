@@ -608,7 +608,7 @@ export const rlc_r8 = (cpu: CPU, reg8: Reg8) => {
     let [n, carry] = rlc(r8)
     cpu.setR8(reg8, n)
 
-    cpu.F.z = true
+    cpu.F.z = n === 0
     cpu.F.n = false
     cpu.F.h = false
     cpu.F.c = carry
@@ -620,7 +620,7 @@ export const rlc_valHL = (cpu: CPU) => {
     let [n, carry] = rlc(valHL)
     cpu.mmu.wb(cpu.getHL(), n)
 
-    cpu.F.z = true
+    cpu.F.z = n === 0
     cpu.F.n = false
     cpu.F.h = false
     cpu.F.c = carry
@@ -631,7 +631,7 @@ export const rrc_r8 = (cpu: CPU, reg8: Reg8) => {
     let [n, carry] = rrc(r8)
     cpu.setR8(reg8, n)
 
-    cpu.F.z = true
+    cpu.F.z = n === 0
     cpu.F.n = false
     cpu.F.h = false
     cpu.F.c = carry
@@ -642,7 +642,7 @@ export const rrc_valHL = (cpu: CPU) => {
     let [n, carry] = rrc(valHL)
     cpu.mmu.wb(cpu.getHL(), n)
 
-    cpu.F.z = true
+    cpu.F.z = n === 0
     cpu.F.n = false
     cpu.F.h = false
     cpu.F.c = carry
@@ -653,7 +653,7 @@ export const rl_r8 = (cpu: CPU, reg8: Reg8) => {
     let [n, carry] = rl(r8, cpu.F.c)
     cpu.setR8(reg8, n)
 
-    cpu.F.z = true
+    cpu.F.z = n === 0
     cpu.F.n = false
     cpu.F.h = false
     cpu.F.c = carry
@@ -664,7 +664,7 @@ export const rl_valHL = (cpu: CPU) => {
     let [n, carry] = rl(valHL, cpu.F.c)
     cpu.mmu.wb(cpu.getHL(), n)
 
-    cpu.F.z = true
+    cpu.F.z = n === 0
     cpu.F.n = false
     cpu.F.h = false
     cpu.F.c = carry
@@ -675,75 +675,192 @@ export const rr_r8 = (cpu: CPU, reg8: Reg8) => {
     let [n, carry] = rr(r8, cpu.F.c)
     cpu.setR8(reg8, n)
 
-    cpu.F.z = true
+    cpu.F.z = n === 0
     cpu.F.n = false
     cpu.F.h = false
     cpu.F.c = carry
 }
 
 export const rr_valHL = (cpu: CPU) => {
-    let r8 = cpu.mmu.rb(cpu.getHL())
-    let [n, carry] = rr(r8, cpu.F.c)
+    let valHL = cpu.mmu.rb(cpu.getHL())
+    let [n, carry] = rr(valHL, cpu.F.c)
     cpu.mmu.wb(cpu.getHL(), n)
 
-    cpu.F.z = true
+    cpu.F.z = n === 0
     cpu.F.n = false
     cpu.F.h = false
     cpu.F.c = carry
 }
 
+// Shifts n left. Carries if bit 7 is 1. Bit 0 is always 0.
+const sla = (n: number): [number, boolean] => {
+    const carry = (n & 0x80) === 0x80 
+    n = (n << 1) & BYTE_MASK
+    return [n, carry]
+}
+
+// SLA Reg8 [z00c*]
 export const sla_r8 = (cpu: CPU, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    let r8 = cpu.getR8(reg8)
+    let [n, carry] = sla(r8)
+    cpu.setR8(reg8, n)
+
+    cpu.F.z = n === 0
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
+// SLA (HL) [z00c*]
 export const sla_valHL = (cpu: CPU) => {
-    throw new Error('Function not implemented.');
+    const valHL = cpu.mmu.rb(cpu.getHL())
+    let [n, carry] = sla(valHL)
+    cpu.mmu.wb(cpu.getHL(), n)
+
+    cpu.F.z = n === 0
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
+// Shifts n to the right, keeping bit 7 unchanged.
+// Carries if bit 0 is 1.
+const sra = (n: number): [number, boolean] => {
+    const carry = (n & 0x01) === 1
+    const bit7 = (n & 0x80)
+    n = (n >> 1) & BYTE_MASK
+    n |= bit7
+
+    return [n, carry]
+}
+
+// SRA Reg8 [z00c*]
 export const sra_r8 = (cpu: CPU, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    let r8 = cpu.getR8(reg8)
+    let [n, carry] = sra(r8)
+    cpu.setR8(reg8, n)
+
+    cpu.F.z = n === 0
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const sra_valHL = (cpu: CPU) => {
-    throw new Error('Function not implemented.');
+    const valHL = cpu.mmu.rb(cpu.getHL())
+    let [n, carry] = sra(valHL)
+    cpu.mmu.wb(cpu.getHL(), n)
+
+    cpu.F.z = n === 0
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
+const swap = (n: number): number => {
+    const hi = n >> 4
+    const lo = n << 4 
+    return (lo | hi) & BYTE_MASK
+}
+
+// SWAP Reg8 [z000]
 export const swap_r8 = (cpu: CPU, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    const r8 = cpu.getR8(reg8)
+    const n = swap(r8)
+    cpu.setR8(reg8, n)
+
+    cpu.F.z = n === 0
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = false
 }
 
 export const swap_valHL = (cpu: CPU) => {
-    throw new Error('Function not implemented.');
+    const valHL = cpu.mmu.rb(cpu.getHL())
+    let n = swap(valHL)
+    cpu.mmu.wb(cpu.getHL(), n)
+
+    cpu.F.z = n === 0
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = false
 }
 
+// Shifts n to the right, zeroing out bit 7.
+// Carries if bit 0 is 1.
+const srl = (n: number): [number, boolean] => {
+    const carry = (n & 0x01) === 1
+    n = n >> 1
+    return [n, carry]
+}
+
+// SRL Reg8 [z00c]
 export const srl_r8 = (cpu: CPU, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    const r8 = cpu.getR8(reg8)
+    const [n, carry] = srl(r8)
+    cpu.setR8(reg8, n)
+
+    cpu.F.z = n === 0
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
 export const srl_valHL = (cpu: CPU) => {
-    throw new Error('Function not implemented.');
+    const valHL = cpu.mmu.rb(cpu.getHL())
+    const [n, carry] = srl(valHL)
+    cpu.mmu.wb(cpu.getHL(), n)
+
+    cpu.F.z = n === 0
+    cpu.F.n = false
+    cpu.F.h = false
+    cpu.F.c = carry
 }
 
+// BIT n Reg8 [z01-]
 export const bit_n_r8 = (cpu: CPU, n: number, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    const r8 = cpu.getR8(reg8)
+
+    cpu.F.z = ((r8 >> n) & 0x01) === 0x00
+    cpu.F.n = false
+    cpu.F.h = true
+    // c
 }
 
+// BIT n (HL) [z01-]
 export const bit_n_valHL = (cpu: CPU, n: number) => {
-    throw new Error('Function not implemented.');
+    const valHL = cpu.mmu.rb(cpu.getHL())
+
+    cpu.F.z = ((valHL >> n) & 0x01) === 0x00
+    cpu.F.n = false
+    cpu.F.h = true
+    // c
 }
 
+// RES n Reg8 [----]
 export const res_n_r8 = (cpu: CPU, n: number, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    let r8 = cpu.getR8(reg8)
+    r8 ^= (0x1 << n)
+    cpu.setR8(reg8, r8)
 }
 
+// RES n (HL) [----]
 export const res_n_valHL = (cpu: CPU, n: number) => {
-    throw new Error('Function not implemented.');
+    let valHL = cpu.mmu.rb(cpu.getHL())
+    valHL ^= (0x1 << n)
+    cpu.mmu.wb(cpu.getHL(), valHL)
 }
 
+// SET n Reg8 [----]
 export const set_n_r8 = (cpu: CPU, n: number, reg8: Reg8) => {
-    throw new Error('Function not implemented.');
+    let r8 = cpu.getR8(reg8)
+    r8 |= (0x1 << n)
+    cpu.setR8(reg8, r8)
 }
 
+// SET n (HL) [----]
 export const set_n_valHL = (cpu: CPU, n: number) => {
-    throw new Error('Function not implemented.');
+    let valHL = cpu.mmu.rb(cpu.getHL())
+    valHL |= (0x1 << n)
+    cpu.mmu.wb(cpu.getHL(), valHL)
 }
